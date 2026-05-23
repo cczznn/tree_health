@@ -7,5 +7,7 @@ superpowers.md
 .claude/
 .DS_Store
 node_modules/
+.npm-cache/
+.npmrc
 inspo
 triage/
