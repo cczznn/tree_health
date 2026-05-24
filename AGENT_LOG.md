@@ -188,6 +188,23 @@
   - T1 的核心不是“写很多代码”，而是先把测试框架和最小验证链路打通
   - worktree 隔离很适合后续并行任务，但前提是每个 worktree 都有清晰的任务边界
 
+### 18. T2 冷启动实现：数据模型、错误类型与仓储层
+- **时间戳**：2026-05-24
+- **任务编号**：T2
+- **阶段**：实现 / TDD / worktree 隔离
+- **触发技能**：`test-driven-development`、`subagent-driven-development`、`systematic-debugging`
+- **关键上下文**：T2 需要继承 T1 的脚手架，在最新 `master` 基线下重新创建干净 worktree，并先写失败测试再补最小实现。
+- **动作**：
+  - 删除旧的 `feature/t2-domain-repo` 关联，基于最新 `master` 重新创建 `last-t2` worktree
+  - 先写 `tests/domain/validation.test.ts` 与 `tests/repositories/food-repository.test.ts`
+  - 补齐 `src/domain/errors.ts`、`src/domain/types.ts`、`src/domain/validation.ts`、`src/foods/preset-foods.ts`、`src/repositories/index.ts`
+  - 多轮运行 `npm test`，修复预置食物数量不达标、重复导出、数量超出目标等红灯
+  - 最终将预置食物数据精确调整为 100 条，验证 T2 相关测试全绿
+- **结果**：T2 的领域模型、错误类型、校验规则、内存仓储与预置食物数据已落地，相关测试全绿，满足后续 T3/T4/T7/T9 的基础依赖。
+- **学到的教训**：
+  - 冷启动验证暴露出“预置数据规模”必须写死，否则陌生智能体会卡住
+  - 先写测试能快速暴露实现边界问题，尤其是数据条数和导出重复这类细节
+  - worktree 从最新 master 重建能显著降低历史脏状态带来的干扰
 
 
 
@@ -198,7 +215,7 @@ workbuddy部分：
 
 ## 2026-05-23（实现阶段）
 
-### 17. T1：项目脚手架搭建
+### 1. T1：项目脚手架搭建
 - **时间戳**：2026-05-23
 - **阶段**：T1 实现
 - **触发技能**：无
@@ -208,7 +225,7 @@ tests/ 目录结构，编写脚手架验证测试。
 - **结果**：2 个验证测试通过，TypeScript + Vitest 运行正常。
 - **学到的教训**：npm 缓存权限问题（Windows）需要用 `--cache ./.npm-cache` 参数绕过。
 
-### 18. T2：数据模型、错误类型与仓储层
+### 2. T2：数据模型、错误类型与仓储层
 - **时间戳**：2026-05-23
 - **阶段**：T2 实现
 - **触发技能**：无
@@ -221,7 +238,7 @@ tests/ 目录结构，编写脚手架验证测试。
   - 实现通用 InMemoryRepository 和 FoodRepository（含搜索、配额统计）。
 - **结果**：32 个测试全绿（校验 18 + 仓储 14）。
 - **学到的教训**：仓储接口先做内存版，后续可无缝替换为 MySQL 实现，不影响业务逻辑和测试。
-### 19. T3：食物库与搜索 API
+### 3. T3：食物库与搜索 API
 - **时间戳**：2026-05-23
 - **阶段**：T3 实现
 - **触发技能**：无

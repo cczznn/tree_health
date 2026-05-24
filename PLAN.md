@@ -72,7 +72,7 @@
 ## T2. 数据模型、认证用户与仓储层
 
 ### 目标
-定义系统核心实体、登录后的用户隔离约束和基础 CRUD 仓储接口，为所有业务模块提供统一数据访问层。
+定义系统核心实体、登录后的用户隔离约束和基础 CRUD 仓储接口，为所有业务模块提供统一数据访问层。T2 已在基于最新 `master` 重新创建的 `feature/t2-domain-repo` worktree 中完成。
 
 ### 涉及文件
 - `src/domain/**`
@@ -92,6 +92,13 @@
 2. 为仓储读写行为写失败测试（如不存在时读取应报错）
 3. 实现最小内存仓储使测试通过
 4. 重构为清晰、可复用的 domain / repository 结构
+
+### 结果记录
+- 使用独立 worktree `feature/t2-domain-repo`，并在最新 `master` 基线下重新创建
+- 先写 `tests/domain/validation.test.ts` 与 `tests/repositories/food-repository.test.ts`
+- 补齐 `src/domain/errors.ts`、`src/domain/types.ts`、`src/domain/validation.ts`、`src/foods/preset-foods.ts`、`src/repositories/index.ts`
+- 将预置食物数据精确补齐为 100 条，并完成用户隔离与仓储基础校验
+- 对应 commit hash：`2b67e5d`
 
 ### 依赖
 - T1
