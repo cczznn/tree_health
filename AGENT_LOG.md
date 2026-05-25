@@ -206,6 +206,24 @@
   - 先写测试能快速暴露实现边界问题，尤其是数据条数和导出重复这类细节
   - worktree 从最新 master 重建能显著降低历史脏状态带来的干扰
 
+### 19. T3 冷启动实现：食物库与搜索 API
+- **时间戳**：2026-05-24
+- **任务编号**：T3
+- **阶段**：实现 / TDD / worktree 隔离
+- **触发技能**：`test-driven-development`、`subagent-driven-development`、`systematic-debugging`
+- **关键上下文**：T3 需要在最新 `master` 上重新创建干净 worktree，并先写食物搜索、详情、自定义创建与 API 的失败测试，再补最小实现。
+- **动作**：
+  - 删除旧的 `feature/t3-food-search` 关联，基于最新 `master` 重新创建 `last-t3` worktree
+  - 先写 `tests/foods/food-service.test.ts`、`tests/repositories/food-repository.test.ts`、`tests/api/foods-api.test.ts`
+  - 补齐 `src/foods/food-service.ts`、`src/api/foods.ts`、`src/repositories/index.ts` 与预置食物初始化逻辑
+  - 多轮运行 `npm test`，修复 `validInput` 作用域问题与实现缺失带来的红灯
+  - 验证搜索、详情、自定义创建、配额限制、预置食物数量与可见性规则均通过
+- **结果**：T3 的食物搜索 API、服务层、自定义创建与 API 集成测试全部通过，满足后续 T4/T5/T6 的依赖前提。
+- **学到的教训**：
+  - 测试作用域问题会伪装成实现问题，先读报错再改代码很重要
+  - 预置数据和仓储初始化必须一致，否则 API/服务/仓储三层测试会同时报警
+  - worktree 基线对齐后，TDD 定位会更清晰，避免旧分支状态干扰
+
 
 
 ---

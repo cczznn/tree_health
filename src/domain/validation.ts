@@ -2,9 +2,7 @@ import type { BodyMetric, Food, MealRecord } from './types';
 import { ValidationError } from './errors';
 
 export function validateFood(data: Omit<Food, 'id' | 'createdAt'>): void {
-  if (!data.name || data.name.trim().length === 0) {
-    throw new ValidationError('食物名称不能为空');
-  }
+  if (!data.name || data.name.trim().length === 0) throw new ValidationError('食物名称不能为空');
   if (data.caloriesPer100g < 0) throw new ValidationError('热量不能为负数');
   if (data.proteinPer100g < 0) throw new ValidationError('蛋白质不能为负数');
   if (data.fatPer100g < 0) throw new ValidationError('脂肪不能为负数');
@@ -12,9 +10,7 @@ export function validateFood(data: Omit<Food, 'id' | 'createdAt'>): void {
   if (data.fiberPer100g < 0) throw new ValidationError('膳食纤维不能为负数');
   if (data.sugarPer100g < 0) throw new ValidationError('糖不能为负数');
   if (data.sodiumPer100g < 0) throw new ValidationError('钠不能为负数');
-  if (data.sourceType === 'custom' && !data.userId) {
-    throw new ValidationError('自定义食物必须归属用户');
-  }
+  if (data.sourceType === 'custom' && !data.userId) throw new ValidationError('自定义食物必须归属用户');
 }
 
 export function validateBodyMetric(data: Omit<BodyMetric, 'id'>): void {

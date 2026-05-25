@@ -108,7 +108,7 @@
 ## T3. 食物库与搜索 API
 
 ### 目标
-实现预置食物库、自定义食物共享搜索入口、关键词搜索和详情查看能力。冷启动验证已确认 T3 需在 T1 → T2 完成后推进，数据库采用 MySQL，预置食物初始数据量为 100 条，单个用户最多可创建 50 个自定义食物。
+实现预置食物库、自定义食物共享搜索入口、关键词搜索和详情查看能力。T3 已在基于最新 `master` 重新创建的 `feature/t3-food-search` worktree 中完成；冷启动验证确认 T3 需要在 T1 → T2 完成后推进，数据库采用 MySQL，预置食物初始数据量为 100 条，单个用户最多可创建 50 个自定义食物。
 
 ### 涉及文件
 - `src/foods/**`
@@ -130,12 +130,17 @@
 3. 实现最少食物库与搜索逻辑
 4. 重构索引方式，保证可维护
 
+### 结果记录
+- 先写 `tests/foods/food-service.test.ts`、`tests/repositories/food-repository.test.ts` 和 `tests/api/foods-api.test.ts`
+- 补齐 `src/foods/food-service.ts`、`src/api/foods.ts`、`src/repositories/index.ts` 以及预置食物数据
+- 修复测试作用域问题与初始化逻辑后，T3 相关测试全部通过
+- 对应 commit hash：`TBD`
+
 ### 依赖
 - T2
 
 ### 可并行
 - 可与 T4、T7、T9 并行开发，但最终集成时依赖统一 domain 约束
-
 ---
 
 ## T4. 饮食记录 CRUD 与日汇总
