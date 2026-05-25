@@ -63,6 +63,50 @@ describe('Food API 集成测试', () => {
       expect(res.body.data.name).toBe('鸡胸肉');
     });
 
+    it('查看自定义食物详情时要求 X-User-Id', async () => {
+      const created = await request(app)
+        .post('/foods')
+        .set('X-User-Id', 'test-user')
+        .send({
+          name: '我的特制沙拉',
+          caloriesPer100g: 65,
+          proteinPer100g: 4,
+          fatPer100g: 1.5,
+          carbsPer100g: 8,
+          fiberPer100g: 2,
+          sugarPer100g: 3,
+          sodiumPer100g: 40,
+        });
+
+      const res = await request(app).get(`/foods/${created.body.data.id}`);
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    });
+
+    it('查看其他用户的自定义食物详情应被拒绝', async () => {
+      const created = await request(app)
+        .post('/foods')
+        .set('X-User-Id', 'test-user-1')
+        .send({
+          name: '我的特制沙拉',
+          caloriesPer100g: 65,
+          proteinPer100g: 4,
+          fatPer100g: 1.5,
+          carbsPer100g: 8,
+          fiberPer100g: 2,
+          sugarPer100g: 3,
+          sodiumPer100g: 40,
+        });
+
+      const res = await request(app)
+        .get(`/foods/${created.body.data.id}`)
+        .set('X-User-Id', 'test-user-2');
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    });
+
     it('不存在的食物 ID 返回 404 / NOT_FOUND', async () => {
       const res = await request(app)
         .get('/foods/nonexistent')

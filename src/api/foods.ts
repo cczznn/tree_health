@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from 'express';
-import { FoodService, type CreateCustomFoodInput } from '../foods/food-service';
+import { FoodService, type CreateCustomFoodInputDTO } from '../foods/food-service';
 import { FoodRepository } from '../repositories';
-import { AppError } from '../domain/errors';
+import { AppError, ValidationError } from '../domain/errors';
 
 export function createFoodRouter(): Router {
   const router = Router();
@@ -9,7 +9,7 @@ export function createFoodRouter(): Router {
 
   router.get('/', async (req: Request, res: Response) => {
     try {
-      const query = (req.query.query as string) || '';
+      const query = getQueryValue(req.query.query as any);
       const userId = req.headers['x-user-id'] as string | undefined;
       const results = await service.searchFoods(query, userId);
       res.json({ data: results, total: results.length });
@@ -20,7 +20,9 @@ export function createFoodRouter(): Router {
 
   router.get('/:id', async (req: Request, res: Response) => {
     try {
-      const food = await service.getFoodById(req.params.id);
+      const userId = req.headers['x-user-id'] as string | undefined;
+      if (!userId) throw new ValidationError('缺少 X-User-Id 请求头');
+      const food = await service.getFoodById(String(req.params.id), userId);
       res.json({ data: food });
     } catch (err) {
       handleError(err, res);
@@ -34,7 +36,7 @@ export function createFoodRouter(): Router {
         res.status(400).json({ error: { code: 'MISSING_USER_ID', message: '缺少 X-User-Id 请求头' } });
         return;
       }
-      const input = req.body as CreateCustomFoodInput;
+      const input = req.body as CreateCustomFoodInputDTO;
       const food = await service.createCustomFood(input, userId);
       res.status(201).json({ data: food });
     } catch (err) {
@@ -43,6 +45,11 @@ export function createFoodRouter(): Router {
   });
 
   return router;
+}
+
+function getQueryValue(value: unknown): string {
+  if (Array.isArray(value)) return String(value[0] ?? '');
+  return typeof value === 'string' ? value : '';
 }
 
 function handleError(err: unknown, res: Response): void {
