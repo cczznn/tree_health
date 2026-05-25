@@ -392,3 +392,32 @@
   - 修复类型与断言问题后，使 `npm run typecheck` 与 `npm test` 均通过
 - **结果**：T7 的健身计划模板与生成能力已完成，输出结构化训练计划，可供后续打卡模块引用。
 - **学到的教训**：模板驱动比自由生成更稳定，也更适合课程项目的可验证要求；测试里应该明确断言输出结构，而不仅是标题文本。
+
+### 32. T8 需求确认：打卡策略与绑定粒度收敛
+- **时间戳**：2026-05-25
+- **任务编号**：T8（设计阶段）
+- **阶段**：brainstorming / 需求澄清
+- **触发技能**：`brainstorming`
+- **关键上下文**：用户要求在 `last-t8` worktree 中推进 T8，并先确认重复打卡策略与绑定粒度。
+- **动作**：
+  - 确认同一天允许多次提交，按时间顺序保留多条记录
+  - 确认打卡绑定粒度为 `planId + date + note`
+  - 收敛出轻量记录型打卡模型，不做动作级唯一性限制
+- **结果**：T8 的输入与查询规则已经明确，可开始 TDD 实现。
+- **学到的教训**：打卡功能如果过早引入唯一性约束，会直接和“保留历史”目标冲突；先保留多条记录最稳妥。
+
+### 33. T8 实现：运动打卡与按日查询
+- **时间戳**：2026-05-25
+- **任务编号**：T8
+- **阶段**：实现 / TDD / worktree 隔离
+- **触发技能**：`test-driven-development`、`subagent-driven-development`、`systematic-debugging`
+- **关键上下文**：T8 需要在独立 `last-t8` worktree 中实现，先写失败测试，再补打卡服务与仓储支持，最后验证类型与测试。
+- **动作**：
+  - 创建 `feature/t8-checkins` worktree
+  - 新增 `src/workout-checkins/workout-checkin-service.ts`
+  - 增补 `WorkoutPlanRepository` 与 `WorkoutCheckinRepository`
+  - 先写 `tests/workout-checkins/workout-checkin-service.test.ts`
+  - 按 `planId + date` 查询当天全部打卡记录，同一天重复提交保留历史
+  - 运行 `npm run typecheck` 与 `npm test`
+- **结果**：T8 的运动打卡与查询能力已完成，测试与类型检查均通过。
+- **学到的教训**：只要把“创建”和“查询”两条主路径打通，打卡功能就能形成稳定闭环；重复提交不要在仓储层偷偷覆盖。

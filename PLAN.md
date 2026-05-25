@@ -317,24 +317,37 @@
 ## T8. 运动打卡
 
 ### 目标
-支持用户对计划中的训练项进行每日打卡和状态追踪。
+支持用户对计划中的训练项进行每日打卡和状态追踪。T8 已在独立 worktree `E:/6/ai/last-t8` 中完成，采用 `planId + date + note` 的轻量打卡规则，同一天允许多次提交并按时间顺序保留记录。
 
 ### 涉及文件
 - `src/workout-checkins/**`
 - `src/api/workout-checkins.*`
 - `tests/workout-checkins/**`
+- `src/repositories/**`
 
 ### 预期实现要点
 - 对某一天的训练项提交完成状态
 - 防止重复数据带来混乱，支持按日期区分
-- 汇总完成率或近期打卡情况
+- 按 `planId + date` 查询当天所有打卡记录
+- 同一天允许多次提交，保留历史
+- 备注字段用于记录本次打卡的简短说明
 
 ### 验证步骤
 1. 先写失败测试：首次打卡成功
 2. 先写失败测试：同一天重复打卡按设定策略处理
 3. 先写失败测试：按计划查询能看到完成状态
-4. 实现最少打卡逻辑
-5. 重构查询与聚合
+4. 先写失败测试：记录按时间顺序返回
+5. 实现最少打卡逻辑
+6. 重构查询与聚合
+
+### 结果记录
+- 在 `E:/6/ai/last-t8` worktree 中完成实现
+- 新增 `WorkoutCheckinService`
+- 增补 `WorkoutPlanRepository`、`WorkoutCheckinRepository`，支持按 `planId + date` 查询多条记录
+- 先写 `tests/workout-checkins/workout-checkin-service.test.ts`，覆盖首次打卡、重复打卡、按日查询与越权场景
+- 同一天重复打卡不报错，记录按时间顺序保留
+- `npm run typecheck` 与 `npm test` 均通过
+- 对应 commit hash：`TBD`
 
 ### 依赖
 - T7
