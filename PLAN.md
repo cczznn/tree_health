@@ -141,6 +141,7 @@
 
 ### 可并行
 - 可与 T4、T7、T9 并行开发，但最终集成时依赖统一 domain 约束
+
 ---
 
 ## T4. 饮食记录 CRUD 与日汇总
@@ -178,7 +179,7 @@
 - 按用户确认的混合策略实现：新增记录增量更新日汇总，编辑 / 删除对对应日期整天重算
 - 补强用户隔离、日期必填、自定义食物归属、日期变更重算等边界，并将对应测试一并加进来
 - 最终 `npm test` 与 `npm run typecheck` 均通过，T4 相关测试共 57 个全部通过
-- 对应 commit hash：`TBD`
+- 对应 commit hash：`16d679a`
 
 ### 依赖
 - T2
@@ -263,7 +264,7 @@
 - 创建后可立即通过现有搜索接口检索到
 - 允许重名，不做名称冲突拦截
 - `npm test` 与 `npm run typecheck` 已通过
-- 对应 commit hash：`TBD`
+- 对应 commit hash：`deb25d6`
 
 ### 依赖
 - T3、T2
@@ -304,7 +305,7 @@
 - 通过规则模板按频率生成周计划安排
 - 使用结构化 `planContent` 承载摘要、周安排和说明
 - `npm run typecheck` 与 `npm test` 均通过
-- 对应 commit hash：`TBD`
+- 对应 commit hash：`4a9a3be`
 
 ### 依赖
 - T2
@@ -347,7 +348,7 @@
 - 先写 `tests/workout-checkins/workout-checkin-service.test.ts`，覆盖首次打卡、重复打卡、按日查询与越权场景
 - 同一天重复打卡不报错，记录按时间顺序保留
 - `npm run typecheck` 与 `npm test` 均通过
-- 对应 commit hash：`TBD`
+- 对应 commit hash：`b396895`
 
 ### 依赖
 - T7
@@ -357,25 +358,37 @@
 ## T9. 体重 / 围度记录与趋势
 
 ### 目标
-支持用户记录体重和围度，并查看趋势变化。
+支持用户记录体重和围度，并查看趋势变化。T9 已在独立 worktree `E:/6/ai/last-t9` 中完成，采用“记录型 CRUD + 简单趋势函数”的方案，允许保存最近记录、与上一条记录的差值以及趋势方向。
 
 ### 涉及文件
 - `src/body-metrics/**`
 - `src/api/body-metrics.*`
 - `tests/body-metrics/**`
+- `src/repositories/**`
 
 ### 预期实现要点
 - 支持新增体重记录
 - 支持新增围度记录
 - 支持按日期范围查询
 - 支持简单趋势数据输出
+- 保留 `latest / previous / delta / direction` 这种轻量趋势结构
 
 ### 验证步骤
 1. 先写失败测试：合法身体数据可保存
 2. 先写失败测试：非法数值拒绝保存
 3. 先写失败测试：按范围查询返回正确排序
-4. 实现最少 CRUD 与趋势函数
-5. 重构数据结构和排序逻辑
+4. 先写失败测试：趋势函数可输出最近变化与方向
+5. 实现最少 CRUD 与趋势函数
+6. 重构数据结构和排序逻辑
+
+### 结果记录
+- 在 `E:/6/ai/last-t9` worktree 中完成实现
+- 新增 `BodyMetricService`
+- 增补 `BodyMetricRepository`，支持按用户和日期范围查询
+- 先写 `tests/body-metrics/body-metric-service.test.ts`，覆盖合法保存、非法值、范围查询、趋势与边界场景
+- 通过纯函数式趋势输出最近变化、上一条记录和方向
+- `npm run typecheck` 与 `npm test` 均通过
+- 对应 commit hash：`TBD`
 
 ### 依赖
 - T2
