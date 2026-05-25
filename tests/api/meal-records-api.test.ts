@@ -2,8 +2,10 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 import { createMealRecordsRouter } from '../../src/api/meal-records';
+import { beginNewAppContext } from '../../src/app-context';
 
 function createTestApp() {
+  beginNewAppContext();
   const app = express();
   app.use(express.json());
   app.use('/meal-records', createMealRecordsRouter());

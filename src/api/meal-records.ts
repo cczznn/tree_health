@@ -1,20 +1,18 @@
 import { Router, type Request, type Response } from 'express';
 import { AppError, ValidationError } from '../domain/errors';
-import { FoodRepository, MealRecordRepository, DailyMealSummaryRepository } from '../repositories';
 import { MealRecordService } from '../meal-records/meal-record-service';
 import { FoodService } from '../foods/food-service';
+import { getAppContext } from '../app-context';
 
 export function createMealRecordsRouter(): Router {
   const router = Router();
-  const foodRepo = new FoodRepository();
-  const mealRecordRepo = new MealRecordRepository();
-  const summaryRepo = new DailyMealSummaryRepository();
-  const mealRecordService = new MealRecordService(foodRepo, mealRecordRepo, summaryRepo);
+  const { foodRepo, mealRecordRepo, dailyMealSummaryRepo } = getAppContext();
+  const mealRecordService = new MealRecordService(foodRepo, mealRecordRepo, dailyMealSummaryRepo);
   const foodService = new FoodService(foodRepo);
 
   router.get('/foods', async (req: Request, res: Response) => {
     try {
-      const query = getQueryValue(req.query.query as any);
+      const query = getQueryValue(req.query.query);
       const userId = req.headers['x-user-id'] as string | undefined;
       const results = await foodService.searchFoods(query, userId);
       res.json({ data: results, total: results.length });
@@ -44,7 +42,7 @@ export function createMealRecordsRouter(): Router {
         res.status(400).json({ error: { code: 'MISSING_USER_ID', message: '缺少 X-User-Id 请求头' } });
         return;
       }
-      const date = getQueryValue(req.query.date as any);
+      const date = getQueryValue(req.query.date);
       if (!date) throw new ValidationError('日期不能为空');
       const data = await mealRecordService.getMealRecordsByDate(userId, date);
       const summary = await mealRecordService.getSummaryByDate(userId, date);
