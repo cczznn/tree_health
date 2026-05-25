@@ -224,9 +224,51 @@
   - 预置数据和仓储初始化必须一致，否则 API/服务/仓储三层测试会同时报警
   - worktree 基线对齐后，TDD 定位会更清晰，避免旧分支状态干扰
 
+### 20. T4 冷启动实现：饮食记录 CRUD 与日汇总
+- **时间戳**：2026-05-24
+- **任务编号**：T4
+- **阶段**：实现 / TDD / worktree 隔离
+- **触发技能**：`test-driven-development`、`subagent-driven-development`、`systematic-debugging`
+- **关键上下文**：T4 要实现饮食记录新增、编辑、删除、按日查询，以及独立持久化日汇总；用户明确要求新增增量、编辑/删除整天重算。
+- **动作**：
+  - 基于当前 `master` 创建 `last-t4` 独立 worktree 和 `feature/t4-meal-records` 分支
+  - 先写 `tests/meal-records/meal-record-service.test.ts` 和 `tests/api/meal-records-api.test.ts`
+  - 补齐 `DailyMealSummary`、`MealRecordRepository`、`DailyMealSummaryRepository`、`MealRecordService` 与 `src/api/meal-records.ts`
+  - 在红灯阶段逐步修复：缺失模块、用户隔离、日期必填、自定义食物归属、日期变更重算等边界
+  - 最终 `npm test` 通过，T4 的主路径与边界场景都变绿
+- **结果**：T4 完成，日汇总独立持久化且支持混合更新策略；相关测试全绿。
+- **学到的教训**：
+  - 记录变更与汇总更新最好在服务层统一编排，不要散落在 API 层
+  - 编辑改日期是一个容易漏掉的边界，必须显式测试
+  - 用户隔离与详情可见性最好从一开始就写入 API / service，而不是后补
 
+### 21. T4 之后的代码自检与边界补强
+- **时间戳**：2026-05-24
+- **任务编号**：T4（收尾）
+- **阶段**：代码自检 / 边界修正
+- **触发技能**：`systematic-debugging`、`test-driven-development`
+- **关键上下文**：用户要求对 T4 进行额外代码自检与边界梳理。
+- **动作**：
+  - 检查 `MealRecordService`、`FoodRepository`、`FoodService`、`api` 层与相关测试
+  - 发现并补强用户隔离、日期必填、自定义食物归属检查、日期变更重算等边界
+  - 追加测试覆盖：查看/修改/删除他人记录、缺少日期参数、改日期后旧新汇总同步
+- **结果**：T4 边界场景补齐，测试集合扩大且依然保持全绿。
+- **学到的教训**：功能主流程绿灯并不代表边界稳固；额外自检能有效把“看起来能用”变成“真的合规”。
 
----
+### 22. 清理剩余 TypeScript typecheck 报错
+- **时间戳**：2026-05-24
+- **任务编号**：T4（工程质量收尾）
+- **阶段**：类型修复 / 验证
+- **触发技能**：`systematic-debugging`
+- **关键上下文**：运行 `npm run typecheck` 后暴露出 Node、Express、Supertest、query 参数和 `validateMealRecord` 的类型报错。
+- **动作**：
+  - 安装并启用 `@types/node`、`@types/express`、`@types/supertest`
+  - 调整 `tsconfig.json` 的 `types` 为 `vitest/globals` + `node`
+  - 修正 `validateMealRecord` 的类型定义，使其支持测试与服务层的调用方式
+  - 修正 API 层 query / params 的类型处理
+  - 修正 `MealRecordService` 中日期类型推断问题
+- **结果**：`npm run typecheck` 最终通过，项目类型错误清零。
+- **学到的教训**：测试能过不代表类型系统健康；在 TypeScript 项目里，`typecheck` 是独立且必须过的一道关。
 
 workbuddy部分：
 ----------------------------------------------------------------------------

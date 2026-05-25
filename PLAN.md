@@ -134,7 +134,7 @@
 - 先写 `tests/foods/food-service.test.ts`、`tests/repositories/food-repository.test.ts` 和 `tests/api/foods-api.test.ts`
 - 补齐 `src/foods/food-service.ts`、`src/api/foods.ts`、`src/repositories/index.ts` 以及预置食物数据
 - 修复测试作用域问题与初始化逻辑后，T3 相关测试全部通过
-- 对应 commit hash：`TBD`
+- 对应 commit hash：`84eb9f4`
 
 ### 依赖
 - T2
@@ -146,7 +146,7 @@
 ## T4. 饮食记录 CRUD 与日汇总
 
 ### 目标
-实现饮食记录新增、编辑、删除、查询，以及按日维度的聚合基础能力。
+实现饮食记录新增、编辑、删除、查询，以及按日维度的独立持久化汇总能力。日汇总作为单独数据结构保存，并在饮食记录变更时立刻更新。T4 已在基于当前 `master` 重新创建的 `feature/t4-meal-records` worktree 中完成。
 
 ### 涉及文件
 - `src/meal-records/**`
@@ -158,14 +158,27 @@
 - 记录包含餐次、份量、日期、备注
 - 支持按日获取记录列表
 - 支持编辑与删除记录
-- 新增记录后能触发基础日汇总更新
+- 日汇总作为独立实体持久化保存
+- 新增记录时对对应日汇总执行增量更新
+- 编辑或删除记录时对对应日期的日汇总执行整天重算
+- 当某天最后一条记录被删除后，按设计清理或重建该日汇总
 
 ### 验证步骤
 1. 先写失败测试：新增记录成功、缺字段失败、份量非法失败
 2. 先写失败测试：按日期查询可返回当天记录
 3. 先写失败测试：编辑/删除记录后状态更新正确
-4. 实现最少 CRUD 和聚合逻辑
-5. 重构重复校验逻辑
+4. 先写失败测试：新增后日汇总增量更新正确，编辑/删除后整天重算正确
+5. 实现最少 CRUD 和聚合逻辑
+6. 重构重复校验逻辑
+
+### 结果记录
+- 基于当前 `master` 创建独立 worktree `E:/6/ai/last-t4` 和分支 `feature/t4-meal-records`
+- 先写 `tests/meal-records/meal-record-service.test.ts` 和 `tests/api/meal-records-api.test.ts`，确认饮食记录与汇总更新的红灯行为
+- 补齐 `src/meal-records/meal-record-service.ts`、`src/api/meal-records.ts`、`src/repositories/index.ts`、`src/domain/types.ts` 与相关验证逻辑
+- 按用户确认的混合策略实现：新增记录增量更新日汇总，编辑 / 删除对对应日期整天重算
+- 补强用户隔离、日期必填、自定义食物归属、日期变更重算等边界，并将对应测试一并加进来
+- 最终 `npm test` 与 `npm run typecheck` 均通过，T4 相关测试共 57 个全部通过
+- 对应 commit hash：`TBD`
 
 ### 依赖
 - T2
