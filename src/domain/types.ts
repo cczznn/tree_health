@@ -44,6 +44,21 @@ export interface MealRecord {
   note: string | null;
 }
 
+export interface DailyMealSummary {
+  id: string;
+  userId: string;
+  summaryDate: string;
+  mealCount: number;
+  totalCalories: number;
+  totalProtein: number;
+  totalFat: number;
+  totalCarbs: number;
+  totalFiber: number;
+  totalSugar: number;
+  totalSodium: number;
+  updatedAt: string;
+}
+
 export interface WorkoutPlan {
   id: string;
   userId: string;

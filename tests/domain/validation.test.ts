@@ -95,6 +95,8 @@ describe('domain validation', () => {
           mealType: 'breakfast',
           amount: 100,
           unit: 'g',
+          recordDate: '2026-05-23',
+          note: null,
           calories: 100,
           protein: 2,
           fat: 1,
@@ -102,8 +104,6 @@ describe('domain validation', () => {
           fiber: 1,
           sugar: 1,
           sodium: 2,
-          recordDate: '2026-05-23',
-          note: null,
         }),
       ).toThrow(ValidationError);
     });
@@ -116,6 +116,8 @@ describe('domain validation', () => {
           mealType: 'breakfast',
           amount: 0,
           unit: 'g',
+          recordDate: '2026-05-23',
+          note: null,
           calories: 100,
           protein: 2,
           fat: 1,
@@ -123,8 +125,6 @@ describe('domain validation', () => {
           fiber: 1,
           sugar: 1,
           sodium: 2,
-          recordDate: '2026-05-23',
-          note: null,
         }),
       ).toThrow(ValidationError);
     });
@@ -137,6 +137,8 @@ describe('domain validation', () => {
           mealType: 'breakfast',
           amount: 100,
           unit: 'g',
+          recordDate: '',
+          note: null,
           calories: 100,
           protein: 2,
           fat: 1,
@@ -144,8 +146,6 @@ describe('domain validation', () => {
           fiber: 1,
           sugar: 1,
           sodium: 2,
-          recordDate: '',
-          note: null,
         }),
       ).toThrow(ValidationError);
     });

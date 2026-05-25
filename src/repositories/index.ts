@@ -1,4 +1,4 @@
-import type { Food } from '../domain/types';
+import type { DailyMealSummary, Food, MealRecord } from '../domain/types';
 import { NotFoundError } from '../domain/errors';
 import { PRESET_FOODS } from '../foods/preset-foods';
 
@@ -86,5 +86,21 @@ export class FoodRepository extends InMemoryRepository<Food> {
     return Array.from(this.store.values()).filter(
       (f) => f.sourceType === 'custom' && f.userId === userId,
     );
+  }
+}
+
+export class MealRecordRepository extends InMemoryRepository<MealRecord> {
+  async findByUserAndDate(userId: string, date: string): Promise<MealRecord[]> {
+    return Array.from(this.store.values()).filter(
+      (record) => record.userId === userId && record.recordDate === date,
+    );
+  }
+}
+
+export class DailyMealSummaryRepository extends InMemoryRepository<DailyMealSummary> {
+  async findByUserAndDate(userId: string, date: string): Promise<DailyMealSummary | null> {
+    return Array.from(this.store.values()).find(
+      (summary) => summary.userId === userId && summary.summaryDate === date,
+    ) ?? null;
   }
 }

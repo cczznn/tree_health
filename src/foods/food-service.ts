@@ -6,7 +6,18 @@ import { ConflictError, ValidationError } from '../domain/errors';
 
 export const CUSTOM_FOOD_LIMIT = 50;
 
-export type CreateCustomFoodInput = Omit<Food, 'id' | 'createdAt' | 'userId' | 'sourceType'>;
+export interface CreateCustomFoodInputDTO {
+  name: string;
+  caloriesPer100g: number;
+  proteinPer100g: number;
+  fatPer100g: number;
+  carbsPer100g: number;
+  fiberPer100g: number;
+  sugarPer100g: number;
+  sodiumPer100g: number;
+}
+
+export type CreateCustomFoodInput = CreateCustomFoodInputDTO;
 
 export class FoodService {
   constructor(private readonly repo: FoodRepository) {}
@@ -15,8 +26,14 @@ export class FoodService {
     return this.repo.search(query, userId);
   }
 
-  async getFoodById(id: string): Promise<Food> {
-    return this.repo.getById(id);
+  async getFoodById(id: string, userId?: string): Promise<Food> {
+    const food = await this.repo.getById(id);
+    if (food.sourceType === 'custom') {
+      if (!userId || food.userId !== userId) {
+        throw new ValidationError('无权查看该食物详情');
+      }
+    }
+    return food;
   }
 
   async getCustomFoods(userId: string): Promise<Food[]> {

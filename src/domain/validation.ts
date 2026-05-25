@@ -22,9 +22,28 @@ export function validateBodyMetric(data: Omit<BodyMetric, 'id'>): void {
   if (data.thigh !== null && data.thigh <= 0) throw new ValidationError('大腿围必须大于0');
 }
 
-export function validateMealRecord(data: Omit<MealRecord, 'id'>): void {
+export function validateMealRecord(
+  data: {
+    userId: string;
+    foodId: string;
+    mealType: MealRecord['mealType'];
+    amount: number;
+    unit: string;
+    recordDate: string;
+    note: string | null;
+    calories?: number;
+    protein?: number;
+    fat?: number;
+    carbs?: number;
+    fiber?: number;
+    sugar?: number;
+    sodium?: number;
+  },
+): void {
   if (!data.userId) throw new ValidationError('用户ID不能为空');
   if (!data.foodId) throw new ValidationError('食物ID不能为空');
+  if (!data.mealType) throw new ValidationError('餐次不能为空');
   if (data.amount <= 0) throw new ValidationError('份量必须大于0');
+  if (!data.unit) throw new ValidationError('单位不能为空');
   if (!data.recordDate) throw new ValidationError('记录日期不能为空');
 }
