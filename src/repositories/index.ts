@@ -1,4 +1,4 @@
-import type { DailyMealSummary, Food, MealRecord, WorkoutPlan, WorkoutCheckin } from '../domain/types';
+import type { DailyMealSummary, Food, MealRecord, WorkoutPlan, WorkoutCheckin, BodyMetric } from '../domain/types';
 import { NotFoundError } from '../domain/errors';
 import { PRESET_FOODS } from '../foods/preset-foods';
 
@@ -111,6 +111,18 @@ export class WorkoutCheckinRepository extends InMemoryRepository<WorkoutCheckin>
   async findByUserPlanAndDate(userId: string, planId: string, date: string): Promise<WorkoutCheckin[]> {
     return Array.from(this.store.values()).filter(
       (checkin) => checkin.userId === userId && checkin.planId === planId && checkin.date === date,
+    );
+  }
+}
+
+export class BodyMetricRepository extends InMemoryRepository<BodyMetric> {
+  async findByUser(userId: string): Promise<BodyMetric[]> {
+    return Array.from(this.store.values()).filter((metric) => metric.userId === userId);
+  }
+
+  async findByUserAndDateRange(userId: string, startDate: string, endDate: string): Promise<BodyMetric[]> {
+    return Array.from(this.store.values()).filter(
+      (metric) => metric.userId === userId && metric.metricDate >= startDate && metric.metricDate <= endDate,
     );
   }
 }

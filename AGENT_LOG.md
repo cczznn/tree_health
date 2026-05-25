@@ -421,3 +421,32 @@
   - 运行 `npm run typecheck` 与 `npm test`
 - **结果**：T8 的运动打卡与查询能力已完成，测试与类型检查均通过。
 - **学到的教训**：只要把“创建”和“查询”两条主路径打通，打卡功能就能形成稳定闭环；重复提交不要在仓储层偷偷覆盖。
+
+### 34. T9 冷启动设计与确认：记录型 CRUD + 简单趋势函数
+- **时间戳**：2026-05-25
+- **任务编号**：T9（设计阶段）
+- **阶段**：brainstorming / 需求澄清
+- **触发技能**：`brainstorming`
+- **关键上下文**：用户要求在 `last-t9` worktree 中推进 T9，并确认最小输入与趋势输出方式。
+- **动作**：
+  - 确认 T9 最小输入采用 `metricDate + weight`，围度可选
+  - 选择“记录型 CRUD + 简单趋势函数”方案
+  - 收敛出 `latest / previous / delta / direction` 的轻量趋势结构
+- **结果**：T9 的输入与趋势边界已经明确，可开始 TDD 实现。
+- **学到的教训**：体重与围度记录最重要的是稳定保存和清晰趋势，不必一开始就做复杂图表或体型分析。
+
+### 35. T9 实现：体重 / 围度记录与趋势
+- **时间戳**：2026-05-25
+- **任务编号**：T9
+- **阶段**：实现 / TDD / worktree 隔离
+- **触发技能**：`test-driven-development`、`subagent-driven-development`、`systematic-debugging`
+- **关键上下文**：T9 需要在独立 `last-t9` worktree 中实现，先写失败测试，再补身体数据仓储和趋势函数，最后验证类型与测试。
+- **动作**：
+  - 创建 `feature/t9-body-metrics` worktree
+  - 新增 `src/body-metrics/body-metric-service.ts`
+  - 增补 `BodyMetricRepository`
+  - 先写 `tests/body-metrics/body-metric-service.test.ts`
+  - 实现保存、按日期范围查询、趋势函数与边界校验
+  - 运行 `npm run typecheck` 与 `npm test`
+- **结果**：T9 的体重 / 围度记录与趋势输出能力已完成，测试与类型检查均通过。
+- **学到的教训**：趋势函数本质上是可测试的纯逻辑，应该尽量与持久化分离，方便后续扩展和前端展示。
