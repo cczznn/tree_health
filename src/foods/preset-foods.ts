@@ -102,4 +102,3 @@ export const PRESET_FOODS: Omit<Food, 'id' | 'createdAt'>[] = [
   { userId: null, name: '豆浆(无糖)', sourceType: 'preset', caloriesPer100g: 16, proteinPer100g: 1.8, fatPer100g: 0.7, carbsPer100g: 0.7, fiberPer100g: 0.1, sugarPer100g: 0, sodiumPer100g: 2 },
   { userId: null, name: '椰汁', sourceType: 'preset', caloriesPer100g: 51, proteinPer100g: 1.5, fatPer100g: 2.3, carbsPer100g: 5.8, fiberPer100g: 0, sugarPer100g: 4.2, sodiumPer100g: 10 },
 ];
-
