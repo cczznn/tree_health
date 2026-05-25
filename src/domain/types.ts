@@ -20,9 +20,9 @@ export interface Food {
   proteinPer100g: number;
   fatPer100g: number;
   carbsPer100g: number;
-  fiberPer100g: number;
-  sugarPer100g: number;
-  sodiumPer100g: number;
+  fiberPer100g: number | null;
+  sugarPer100g: number | null;
+  sodiumPer100g: number | null;
   createdAt: string;
 }
 

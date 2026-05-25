@@ -13,9 +13,9 @@ describe('FoodService', () => {
     proteinPer100g: 4,
     fatPer100g: 1.5,
     carbsPer100g: 8,
-    fiberPer100g: 0,
-    sugarPer100g: 6,
-    sodiumPer100g: 40,
+    fiberPer100g: null,
+    sugarPer100g: null,
+    sodiumPer100g: null,
   };
 
   beforeEach(() => {

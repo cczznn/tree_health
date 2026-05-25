@@ -12,9 +12,9 @@ export interface CreateCustomFoodInputDTO {
   proteinPer100g: number;
   fatPer100g: number;
   carbsPer100g: number;
-  fiberPer100g: number;
-  sugarPer100g: number;
-  sodiumPer100g: number;
+  fiberPer100g?: number | null;
+  sugarPer100g?: number | null;
+  sodiumPer100g?: number | null;
 }
 
 export type CreateCustomFoodInput = CreateCustomFoodInputDTO;
@@ -55,7 +55,14 @@ export class FoodService {
       userId,
       sourceType: 'custom',
       createdAt: new Date().toISOString(),
-      ...input,
+      name: input.name,
+      caloriesPer100g: input.caloriesPer100g,
+      proteinPer100g: input.proteinPer100g,
+      fatPer100g: input.fatPer100g,
+      carbsPer100g: input.carbsPer100g,
+      fiberPer100g: input.fiberPer100g ?? null,
+      sugarPer100g: input.sugarPer100g ?? null,
+      sodiumPer100g: input.sodiumPer100g ?? null,
     };
 
     validateFood(food);

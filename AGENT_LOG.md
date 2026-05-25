@@ -330,3 +330,37 @@
   - 为统计结果补充 `goalComparison`，并修复日期 / 用户头的边界处理
 - **结果**：统计与记录在测试中稳定共享同一数据源，T5 相关测试最终全部通过。
 - **学到的教训**：状态型内存仓储在测试环境中一定要可重置，否则集成测试会出现难以定位的串扰问题。
+
+### 28. T6 冷启动设计与确认：自定义食物创建规则收敛
+- **时间戳**：2026-05-25
+- **任务编号**：T6（设计阶段）
+- **阶段**：brainstorming / 需求澄清
+- **触发技能**：`brainstorming`
+- **关键上下文**：用户要求实现 T6，并明确希望在 `E:\6\ai\last-t6` worktree 中完成，同时要遵循课程文档第 131–139 行对 T6 的要求。
+- **动作**：
+  - 先确认“自定义食物创建后必须立刻出现在搜索里，且允许同名”
+  - 进一步确认字段策略后，用户决定：`name + calories + protein + fat + carbs` 必填，`fiber / sugar / sodium` 可选
+  - 讨论后确定可选营养字段应以 `null` 语义保存，而不是默认补 0
+  - 将设计收敛为：创建后立即可搜、允许同名、用户隔离不变、可选字段兼容空值
+- **结果**：T6 的输入规则和数据语义已明确，不再沿用 SPEC 中“全字段必填”的更严格版本。
+- **学到的教训**：当课程 SPEC 与实际产品决策不完全一致时，必须把最终采用的规则显式写下来，不能默认实现者自行猜测。
+
+### 29. T6 实现：自定义食物创建与搜索联动
+- **时间戳**：2026-05-25
+- **任务编号**：T6
+- **阶段**：实现 / TDD / worktree 隔离
+- **触发技能**：`test-driven-development`、`subagent-driven-development`、`systematic-debugging`
+- **关键上下文**：T6 需要在 `E:\6\ai\last-t6` 中完成，且要保留与 T3/T4/T5 一致的用户隔离、搜索联动和 API 行为。
+- **动作**：
+  - 检查 `last-t6` worktree 与已有代码状态
+  - 读取 `src/domain/types.ts`、`src/domain/validation.ts`、`src/foods/food-service.ts`、`src/repositories/index.ts`、`src/api/foods.ts`、`tests/api/foods-api.test.ts`
+  - 将 `CreateCustomFoodInputDTO` 的可选字段调整为 `fiber/sugar/sodium?: number | null`
+  - 把 `validateFood` 扩展为允许可选字段为 `null`
+  - 在 `FoodService.createCustomFood()` 中将缺失的可选字段落库为 `null`
+  - 将 API 测试里的创建请求 body 调整为只传必填字段，确保兼容简化输入规则
+  - 运行 `npm install` 补齐 `last-t6` worktree 的依赖后，再执行 `npm run typecheck` 与 `npm test`
+- **结果**：T6 的自定义食物创建能力已实现，创建后能立即进入搜索结果，且允许同名；类型检查和测试均通过。
+- **学到的教训**：
+  - 课程文档中的规范不一定是最终产品规则，必须以用户确认的方案为准
+  - 可选字段最好在类型层、校验层、服务层一起调整，否则很容易出现“类型过了但运行时不兼容”
+  - 在独立 worktree 中实现任务时，先补依赖再验收能减少环境问题对判断的干扰

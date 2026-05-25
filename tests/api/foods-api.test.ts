@@ -73,9 +73,6 @@ describe('Food API 集成测试', () => {
           proteinPer100g: 4,
           fatPer100g: 1.5,
           carbsPer100g: 8,
-          fiberPer100g: 2,
-          sugarPer100g: 3,
-          sodiumPer100g: 40,
         });
 
       const res = await request(app).get(`/foods/${created.body.data.id}`);
@@ -94,9 +91,6 @@ describe('Food API 集成测试', () => {
           proteinPer100g: 4,
           fatPer100g: 1.5,
           carbsPer100g: 8,
-          fiberPer100g: 2,
-          sugarPer100g: 3,
-          sodiumPer100g: 40,
         });
 
       const res = await request(app)
@@ -124,9 +118,6 @@ describe('Food API 集成测试', () => {
       proteinPer100g: 4,
       fatPer100g: 1.5,
       carbsPer100g: 8,
-      fiberPer100g: 2,
-      sugarPer100g: 3,
-      sodiumPer100g: 40,
     };
 
     it('合法自定义食物可创建成功', async () => {
@@ -182,9 +173,6 @@ describe('Food API 集成测试', () => {
       proteinPer100g: 4,
       fatPer100g: 1.5,
       carbsPer100g: 8,
-      fiberPer100g: 2,
-      sugarPer100g: 3,
-      sodiumPer100g: 40,
     };
 
     it('单用户最多创建 50 个自定义食物', async () => {

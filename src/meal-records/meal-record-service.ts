@@ -92,6 +92,7 @@ export class MealRecordService {
 
   private buildRecord(input: CreateMealRecordInput | (UpdateMealRecordInput & { userId: string }), food: Food, id: string = randomUUID()): MealRecord {
     const factor = input.amount / 100;
+    const safe = (value: number | null) => (value ?? 0) * factor;
     return {
       id,
       userId: input.userId,
@@ -103,9 +104,9 @@ export class MealRecordService {
       protein: Number((food.proteinPer100g * factor).toFixed(2)),
       fat: Number((food.fatPer100g * factor).toFixed(2)),
       carbs: Number((food.carbsPer100g * factor).toFixed(2)),
-      fiber: Number((food.fiberPer100g * factor).toFixed(2)),
-      sugar: Number((food.sugarPer100g * factor).toFixed(2)),
-      sodium: Number((food.sodiumPer100g * factor).toFixed(2)),
+      fiber: Number(safe(food.fiberPer100g).toFixed(2)),
+      sugar: Number(safe(food.sugarPer100g).toFixed(2)),
+      sodium: Number(safe(food.sodiumPer100g).toFixed(2)),
       recordDate: input.recordDate,
       note: input.note,
     };

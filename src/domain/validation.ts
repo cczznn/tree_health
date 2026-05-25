@@ -7,9 +7,9 @@ export function validateFood(data: Omit<Food, 'id' | 'createdAt'>): void {
   if (data.proteinPer100g < 0) throw new ValidationError('蛋白质不能为负数');
   if (data.fatPer100g < 0) throw new ValidationError('脂肪不能为负数');
   if (data.carbsPer100g < 0) throw new ValidationError('碳水不能为负数');
-  if (data.fiberPer100g < 0) throw new ValidationError('膳食纤维不能为负数');
-  if (data.sugarPer100g < 0) throw new ValidationError('糖不能为负数');
-  if (data.sodiumPer100g < 0) throw new ValidationError('钠不能为负数');
+  if (data.fiberPer100g !== null && data.fiberPer100g < 0) throw new ValidationError('膳食纤维不能为负数');
+  if (data.sugarPer100g !== null && data.sugarPer100g < 0) throw new ValidationError('糖不能为负数');
+  if (data.sodiumPer100g !== null && data.sodiumPer100g < 0) throw new ValidationError('钠不能为负数');
   if (data.sourceType === 'custom' && !data.userId) throw new ValidationError('自定义食物必须归属用户');
 }
 
