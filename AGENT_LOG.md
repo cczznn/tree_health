@@ -421,3 +421,62 @@
   - 运行 `npm run typecheck` 与 `npm test`
 - **结果**：T8 的运动打卡与查询能力已完成，测试与类型检查均通过。
 - **学到的教训**：只要把“创建”和“查询”两条主路径打通，打卡功能就能形成稳定闭环；重复提交不要在仓储层偷偷覆盖。
+
+### 34. T9 冷启动设计与确认：记录型 CRUD + 简单趋势函数
+- **时间戳**：2026-05-25
+- **任务编号**：T9（设计阶段）
+- **阶段**：brainstorming / 需求澄清
+- **触发技能**：`brainstorming`
+- **关键上下文**：用户要求在 `last-t9` worktree 中推进 T9，并确认最小输入与趋势输出方式。
+- **动作**：
+  - 确认 T9 最小输入采用 `metricDate + weight`，围度可选
+  - 选择“记录型 CRUD + 简单趋势函数”方案
+  - 收敛出 `latest / previous / delta / direction` 的轻量趋势结构
+- **结果**：T9 的输入与趋势边界已经明确，可开始 TDD 实现。
+- **学到的教训**：体重与围度记录最重要的是稳定保存和清晰趋势，不必一开始就做复杂图表或体型分析。
+
+### 35. T9 实现：体重 / 围度记录与趋势
+- **时间戳**：2026-05-25
+- **任务编号**：T9
+- **阶段**：实现 / TDD / worktree 隔离
+- **触发技能**：`test-driven-development`、`subagent-driven-development`、`systematic-debugging`
+- **关键上下文**：T9 需要在独立 `last-t9` worktree 中实现，先写失败测试，再补身体数据仓储和趋势函数，最后验证类型与测试。
+- **动作**：
+  - 创建 `feature/t9-body-metrics` worktree
+  - 新增 `src/body-metrics/body-metric-service.ts`
+  - 增补 `BodyMetricRepository`
+  - 先写 `tests/body-metrics/body-metric-service.test.ts`
+  - 实现保存、按日期范围查询、趋势函数与边界校验
+  - 运行 `npm run typecheck` 与 `npm test`
+- **结果**：T9 的体重 / 围度记录与趋势输出能力已完成，测试与类型检查均通过。
+- **学到的教训**：趋势函数本质上是可测试的纯逻辑，应该尽量与持久化分离，方便后续扩展和前端展示。
+
+### 36. T10 冷启动设计与确认：结构化推荐与降级规则
+- **时间戳**：2026-05-25
+- **任务编号**：T10（设计阶段）
+- **阶段**：brainstorming / 需求澄清
+- **触发技能**：`brainstorming`
+- **关键上下文**：用户要求在 `last-t10` worktree 中推进 T10，并确认推荐边界和降级策略。
+- **动作**：
+  - 确认推荐要基于饮食、计划和身体数据
+  - 明确采用规则驱动的结构化输出，不做自由聊天式推荐
+  - 确认数据不足时必须降级为通用模板
+- **结果**：T10 的输入与输出规则已经明确，可开始 TDD 实现。
+- **学到的教训**：基础 AI 推荐最重要的是可解释、可回退和可验证，而不是“像聊天机器人”。
+
+### 37. T10 实现：基础 AI 推荐生成
+- **时间戳**：2026-05-25
+- **任务编号**：T10
+- **阶段**：实现 / TDD / worktree 隔离
+- **触发技能**：`test-driven-development`、`subagent-driven-development`、`systematic-debugging`
+- **关键上下文**：T10 需要在独立 `last-t10` worktree 中实现，先写失败测试，再补推荐服务与仓储支持，最后验证类型与测试。
+- **动作**：
+  - 创建 `feature/t10-recommendations` worktree（由于分支已存在，复用现有 worktree）
+  - 新增 `tests/recommendations/recommendation-service.test.ts`
+  - 补齐 `src/recommendations/recommendation-service.ts`
+  - 增补 `RecommendationRepository` 与 `BodyMetricRepository` 导出
+  - 通过结构化规则生成饮食建议、运动建议和身体变化参考
+  - 数据不足时降级为通用 fallback 建议
+  - 多轮运行 `npm run typecheck` 与 `npm test`
+- **结果**：T10 的基础 AI 推荐生成已完成，结构化输出与 fallback 路径均通过验证。
+- **学到的教训**：推荐系统最好先做“规则 + 模板”，把数据不足和解释性问题先收敛，再考虑更复杂的 AI 能力。
