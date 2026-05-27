@@ -107,7 +107,7 @@ export async function getBodyMetrics() {
 }
 
 export async function addBodyMetric(input: { weight: number; waist: number | null; note: string }) {
-  return request<{ data: unknown }>('/api/body-metrics', {
+  return request<{ data: { id: string; metricDate: string; weight: number; waist: number | null; note: string | null } }>('/api/body-metrics', {
     method: 'POST',
     body: JSON.stringify(input),
   })
@@ -120,7 +120,7 @@ export async function getWorkoutCheckins() {
 }
 
 export async function addWorkoutCheckin(note: string) {
-  return request<{ data: unknown }>('/api/workout-checkins', {
+  return request<{ data: { id: string; planId: string; date: string; note: string | null } }>('/api/workout-checkins', {
     method: 'POST',
     body: JSON.stringify({ planId: 'wp-1', date: today(), note }),
   })
