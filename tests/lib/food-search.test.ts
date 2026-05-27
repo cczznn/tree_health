@@ -1,19 +1,21 @@
 import { describe, it, expect } from 'vitest'
 import { filterFoods, formatCalories, type FoodItem } from '../../src/lib/food-search'
 
+const NUTRI = { proteinPer100g: 0, fatPer100g: 0, carbsPer100g: 0, fiberPer100g: null, sugarPer100g: null, sodiumPer100g: null } as const
+
 const MOCK_FOODS: FoodItem[] = [
-  { id: 'f-1', name: '燕麦酸奶碗', caloriesPer100g: 180 },
-  { id: 'f-2', name: '鸡胸肉沙拉', caloriesPer100g: 145 },
-  { id: 'f-3', name: '清蒸鱼', caloriesPer100g: 110 },
-  { id: 'f-4', name: '全麦面包', caloriesPer100g: 250 },
-  { id: 'f-5', name: '牛奶', caloriesPer100g: 65 },
-  { id: 'f-6', name: '苹果', caloriesPer100g: 52 },
-  { id: 'f-7', name: '鸡蛋', caloriesPer100g: 144 },
-  { id: 'f-8', name: '西兰花', caloriesPer100g: 34 },
-  { id: 'f-9', name: '糙米饭', caloriesPer100g: 123 },
-  { id: 'f-10', name: '牛肉', caloriesPer100g: 250 },
-  { id: 'f-11', name: '三文鱼', caloriesPer100g: 208 },
-  { id: 'f-12', name: '豆腐', caloriesPer100g: 76 },
+  { id: 'f-1', name: '燕麦酸奶碗', caloriesPer100g: 180, ...NUTRI },
+  { id: 'f-2', name: '鸡胸肉沙拉', caloriesPer100g: 145, ...NUTRI },
+  { id: 'f-3', name: '清蒸鱼', caloriesPer100g: 110, ...NUTRI },
+  { id: 'f-4', name: '全麦面包', caloriesPer100g: 250, ...NUTRI },
+  { id: 'f-5', name: '牛奶', caloriesPer100g: 65, ...NUTRI },
+  { id: 'f-6', name: '苹果', caloriesPer100g: 52, ...NUTRI },
+  { id: 'f-7', name: '鸡蛋', caloriesPer100g: 144, ...NUTRI },
+  { id: 'f-8', name: '西兰花', caloriesPer100g: 34, ...NUTRI },
+  { id: 'f-9', name: '糙米饭', caloriesPer100g: 123, ...NUTRI },
+  { id: 'f-10', name: '牛肉', caloriesPer100g: 250, ...NUTRI },
+  { id: 'f-11', name: '三文鱼', caloriesPer100g: 208, ...NUTRI },
+  { id: 'f-12', name: '豆腐', caloriesPer100g: 76, ...NUTRI },
 ]
 
 describe('filterFoods', () => {
@@ -49,7 +51,7 @@ describe('filterFoods', () => {
 
 describe('formatCalories', () => {
   it('formats calories with unit', () => {
-    expect(formatCalories({ id: 'f-1', name: 'test', caloriesPer100g: 180 }))
+    expect(formatCalories({ id: 'f-1', name: 'test', caloriesPer100g: 180, ...NUTRI }))
       .toBe('180 kcal/100g')
   })
 })
