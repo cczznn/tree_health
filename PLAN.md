@@ -442,30 +442,41 @@
 ## T11. 微信小程序风格前端页面
 
 ### 目标
-实现与 SPEC 对应的前端页面和交互，保持微信小程序风格。
+实现与 SPEC 对应的前端页面和交互，保持微信小程序风格。T11 已在独立 worktree `E:/6/ai/last-t11` 中完成。
 
 ### 涉及文件
-- `src/ui/**` 或 `app/**`
-- `src/pages/**`
-- `src/components/**`
-- `tests/ui/**` 或组件测试目录
+- `src/app.tsx`、`src/app.config.ts`
+- `src/pages/home.tsx`、`src/pages/diet.tsx`、`src/pages/plan.tsx`、`src/pages/body.tsx`、`src/pages/me.tsx`
+- `src/lib/api.ts`、`src/lib/page-data.ts`、`src/lib/food-search.ts`、`src/lib/meal-form.ts`、`src/lib/body-data.ts`
+- `src/styles.css`
+- `tests/lib/api.test.ts`、`tests/lib/page-data.test.ts`、`tests/lib/food-search.test.ts`、`tests/lib/meal-form.test.ts`、`tests/lib/body-data.test.ts`
+- `config/index.ts`、`babel.config.cjs`、`src/types/css.d.ts`
 
 ### 预期实现要点
-- 首页 / 今日概览
-- 饮食记录页
-- 食物搜索页
-- 健身计划页
-- 运动打卡页
-- 身体数据页
-- 我的 / 设置页
-- 空状态、错误状态、加载状态
+- 首页 / 今日概览：mock API 加载 kcal、记录数、饮食摘要、计划摘要，覆盖加载态/错误态
+- 饮食记录页：搜索食物 → 结果列表 → 选择食物 → 填份量 → 选餐次 → 确认记录，本地添加数据与 mock 数据合并汇总
+- 食物搜索：客户端过滤 `filterFoods`，空查询展示前 10 条，支持中文子串匹配
+- 健身计划页：展示计划详情 + 周安排列表（每天的训练动作），打卡按钮 → 打卡表单 → 打卡历史
+- 运动打卡：集成在计划页，提交打卡后实时更新历史列表
+- 身体数据页：最新体重/围度展示 + 趋势计算（delta/direction）+ 历史列表 + 添加表单（体重必填，腰围/备注选填）
+- 我的 / 设置页：用户信息展示 + 目标设置（减脂/维持/增肌）可点击切换
+- 空状态、错误状态、加载状态：所有数据加载页面均覆盖
 
 ### 验证步骤
-1. 先写失败测试：关键组件渲染正确
-2. 先写失败测试：用户可完成“搜索→选择→记录”的主路径
-3. 先写失败测试：统计卡片能正确展示数据
-4. 实现最少页面与导航
-5. 重构组件复用与样式体系
+1. 先写 39 个前端测试（lib/api、page-data、food-search、meal-form、body-data），覆盖数据转换、校验、过滤、趋势计算
+2. 微信开发者工具中逐页验证 UI 渲染和交互
+3. typecheck 通过，构建成功
+4. 注意：T11 使用 mock 数据独立开发，T12 联调时替换为真实后端 API
+
+### 结果记录
+- 在 `E:/6/ai/last-t11` worktree 中完成所有 5 个 tab 页的实现
+- 发现并修复关键问题：
+  - `ReferenceError: React is not defined` → babel `runtime: 'automatic'`
+  - WeChat 小程序 CSS `gap` 不支持 → 改用 `margin-right`
+  - CSS 类和 `var()` 变量不可靠 → 全项目统一内联 style + 硬编码颜色
+  - `fetch()` 在微信小程序中不存在 → mock 数据直接返回
+- 前端测试从 80 个增长到 119 个（新增 39 个），18 个测试文件全绿
+- 对应技术选型：Taro 4.2 + React 18 + TypeScript，编译目标 weapp
 
 ### 依赖
 - T3、T4、T5、T7、T8、T9

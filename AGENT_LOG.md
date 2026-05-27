@@ -478,3 +478,93 @@
   - 通过类型检查与测试验证实现稳定性
 - **结果**：T10 的基础推荐生成能力已完成，输出结构化、可解释且可降级。
 - **学到的教训**：把推荐拆成规则判断和模板文案后，测试会更清晰，输出也更适合前端消费。
+
+### 38. T11 预处理：在前端 worktree 中修复后端审查问题
+- **时间戳**：2026-05-26
+- **任务编号**：T11（预处理）
+- **阶段**：代码修复 / 收尾整理
+- **触发技能**：`receiving-code-review`、`systematic-debugging`
+- **关键上下文**：在进入 T11 前端页面开发前，先处理 `last-t11` worktree 中审查出的后端实现问题，避免后续页面联调用到带缺陷的基础能力。
+- **动作**：
+  - 修复 `MealRecordService` 中更新/重算逻辑里残留的 `as any`
+  - 调整 `rebuildSummary` 的空状态语义，避免删除最后一条记录后返回含混的汇总对象
+  - 将仓储层 `getById` 的错误实体名改为具体实体名，提升错误可读性
+  - 统一处理 `x-user-id` 相关的缺失判断思路，并为 `WorkoutCheckin` 增加 `createdAt`
+  - 运行 `npm test` 与 `npm run typecheck` 验证修复结果
+- **结果**：T11 worktree 的基础后端能力已收敛，测试和类型检查通过，可继续进行前端骨架实现。
+- **学到的教训**：前端开发前先把底层数据与错误语义修稳，能显著减少联调阶段的噪音和返工。
+
+### 39. T11 环境修复：解决微信小程序空白页面问题
+- **时间戳**：2026-05-27
+- **任务编号**：T11（环境修复）
+- **阶段**：调试 / 问题定位
+- **触发技能**：`systematic-debugging`
+- **关键上下文**：Taro 编译后在微信开发者工具中打开，所有页面内容空白，仅底部 tab 栏正常显示。
+- **动作**：
+  - 检查微信开发者工具控制台，发现 `ReferenceError: React is not defined`
+  - 排查发现 JSX 编译为 `React.createElement` 全局调用，但 webpack ProvidePlugin 未生效
+  - `babel.config.cjs` 中 `@babel/preset-react` 改为 `{ runtime: 'automatic' }`，JSX 编译产物从 `React.createElement` 变为 `react/jsx-runtime` 的 `jsx/jsxs`
+  - `config/index.ts` 中显式添加 `plugins: ['@tarojs/plugin-framework-react']`
+  - 删除多余的 `src/main.tsx`（Taro 不需要 `createRoot` + `document.getElementById`）
+  - CSS 引入从 `main.tsx` 移至 `app.tsx`
+- **结果**：重新编译后页面内容正常显示，5 个 tab 页均可渲染。
+- **学到的教训**：
+  - `@babel/preset-react` 的 `runtime: 'automatic'` 是 Taro 4.x 微信小程序编译的关键配置
+  - 微信小程序不支持 `gap` CSS 属性，需用 `margin-right` 替代
+  - CSS 类和 `var()` 变量在小程序中兼容性差，内联 style + 硬编码颜色值是最可靠的方式
+
+### 40. T11 实现：首页与饮食记录页
+- **时间戳**：2026-05-27
+- **任务编号**：T11（首页 + 饮食页）
+- **阶段**：实现 / TDD
+- **触发技能**：`test-driven-development`、`subagent-driven-development`
+- **关键上下文**：先写 `lib/api.ts`、`lib/page-data.ts`、`lib/food-search.ts`、`lib/meal-form.ts` 的单元测试，再实现页面组件。
+- **动作**：
+  - 重写 `lib/api.ts`：去掉 `fetch()`（小程序不支持），替换为内嵌 mock 数据（3 条饮食记录 + 12 种食物 + 健身计划）
+  - 提取 `buildHomeDisplay` / `buildDietDisplay` 纯函数到 `lib/page-data.ts`，覆盖加载态、错误态、数据态
+  - 提取 `filterFoods` / `formatCalories` 到 `lib/food-search.ts`
+  - 提取 `validateMealForm` / `getMealTypeLabel` 到 `lib/meal-form.ts`
+  - 先写 18 个测试（`tests/lib/api.test.ts`、`page-data.test.ts`、`food-search.test.ts`、`meal-form.test.ts`），全部通过后再实现页面
+  - 实现首页：`useEffect` 加载数据 → `buildHomeDisplay` 转换 → 渲染 kcal/记录数/饮食摘要/计划摘要
+  - 实现饮食页：搜索框 → 搜索结果列表 → 点击"+ 记录" → 表单（份量 + 餐次标签 + 确认/取消按钮）→ 添加后实时更新今日汇总
+- **结果**：
+  - 首页正常显示今日概览和摘要
+  - 饮食页"搜索→选择→记录"完整链路可用
+  - 测试从 80 个增长到 111 个，全部通过
+- **学到的教训**：
+  - 把数据转换逻辑提取为纯函数，可以在不依赖 Taro 运行时的情况下写测试
+  - 微信小程序 `Input` 的 `onInput` 回调用 `e.detail.value` 取值，不是 `e.target.value`
+  - 表单按钮用内联 style 而非 CSS 类，避免小程序样式不生效
+
+### 41. T11 实现：计划页、身体页、我的页
+- **时间戳**：2026-05-27
+- **任务编号**：T11（计划页 + 身体页 + 我的页）
+- **阶段**：实现 / TDD
+- **触发技能**：`test-driven-development`、`subagent-driven-development`
+- **关键上下文**：完成剩余页面，保持与饮食页一致的交互模式（内联 style、mock API、表单验证）。
+- **动作**：
+  - 计划页：展示训练计划 + 周安排列表 + 打卡按钮 → 打卡表单 → 打卡历史
+  - 身体页：提取 `validateBodyForm` / `computeTrend` 到 `lib/body-data.ts`，先写 8 个测试 → 实现体重/围度记录展示 + 趋势计算 + 添加表单
+  - 我的页：目标设置（减脂/维持/增肌）可点击切换，内联 style 实现选中态
+  - 在 `lib/api.ts` 中添加 `getBodyMetrics`、`addBodyMetric`、`getWorkoutCheckins`、`addWorkoutCheckin` mock API
+- **结果**：
+  - 5 个 tab 页全部完成，所有交互可用
+  - 测试增长到 119 个，18 个测试文件全绿
+  - typecheck 通过，构建成功
+- **学到的教训**：
+  - 身体数据趋势计算是纯逻辑，应尽量与 UI 分离，方便测试和复用
+  - 小程序中 CSS 类名方案在 WeChat 工具中不稳定，全项目统一采用内联 style + 硬编码颜色值
+  - 本地添加的数据需要与 mock API 数据合并显示（如饮食汇总 = mock 3 条 + 本地添加 N 条），否则用户会困惑
+
+### 42. T11 收尾：目标设置交互修复
+- **时间戳**：2026-05-27
+- **任务编号**：T11（收尾）
+- **阶段**：UI 修复
+- **触发技能**：`systematic-debugging`
+- **关键上下文**：用户反馈目标设置标签点击后文字消失、无边框中。
+- **动作**：
+  - 将目标标签从 CSS 类改为内联 style
+  - 选中态：绿色背景 `#07c160` + 白字 + 绿色边框
+  - 未选中态：白色背景 + 灰色边框 `#d1d5db` + 深灰文字 `#374151`
+- **结果**：目标标签可正常点击切换，选中态文字清晰可见。
+- **学到的教训**：WeChat 小程序 CSS 类可靠性低于内联 style，全项目应保持一致的内联 style 策略。

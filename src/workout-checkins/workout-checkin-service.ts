@@ -30,6 +30,7 @@ export class WorkoutCheckinService {
       date: input.date,
       status: 'completed',
       note: input.note,
+      createdAt: new Date().toISOString(),
     };
 
     await this.checkinRepo.create(checkin);

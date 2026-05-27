@@ -66,10 +66,13 @@ export class MealRecordService {
     await this.mealRecordRepo.update(recordId, updatedRecord);
     const summary = await this.rebuildSummariesAfterMutation(
       existing.userId,
-      existing.recordDate as any,
-      updatedRecord.recordDate as any,
+      existing.recordDate,
+      updatedRecord.recordDate,
     );
-    return { record: updatedRecord, summary: summary.newSummary };
+    return {
+      record: updatedRecord,
+      summary: summary.newSummary ?? this.emptySummary(existing.userId, updatedRecord.recordDate),
+    };
   }
 
   async deleteMealRecord(recordId: string, userId?: string): Promise<MealRecordResult> {
@@ -79,7 +82,7 @@ export class MealRecordService {
     }
     await this.mealRecordRepo.delete(recordId);
     const summary = await this.rebuildSummary(existing.userId, existing.recordDate);
-    return { record: existing, summary };
+    return { record: existing, summary: summary ?? this.emptySummary(existing.userId, existing.recordDate) };
   }
 
   private async resolveFoodForUser(userId: string, foodId: string): Promise<Food> {
@@ -152,15 +155,15 @@ export class MealRecordService {
 
   private async rebuildSummariesAfterMutation(
     userId: string,
-    oldDate: `${string}-${string}-${string}`,
-    newDate: `${string}-${string}-${string}`,
-  ): Promise<{ oldSummary: DailyMealSummary; newSummary: DailyMealSummary }> {
+    oldDate: string,
+    newDate: string,
+  ): Promise<{ oldSummary: DailyMealSummary | null; newSummary: DailyMealSummary | null }> {
     const oldSummary = await this.rebuildSummary(userId, oldDate);
     const newSummary = newDate === oldDate ? oldSummary : await this.rebuildSummary(userId, newDate);
     return { oldSummary, newSummary };
   }
 
-  private async rebuildSummary(userId: string, date: string): Promise<DailyMealSummary> {
+  private async rebuildSummary(userId: string, date: string): Promise<DailyMealSummary | null> {
     const records = await this.mealRecordRepo.findByUserAndDate(userId, date);
     const now = new Date().toISOString();
     const totals = records.reduce(
@@ -189,13 +192,7 @@ export class MealRecordService {
     const existing = await this.summaryRepo.findByUserAndDate(userId, date);
     if (totals.mealCount === 0) {
       if (existing) await this.summaryRepo.delete(existing.id);
-      return {
-        id: existing?.id ?? randomUUID(),
-        userId,
-        summaryDate: date,
-        ...totals,
-        updatedAt: now,
-      };
+      return null;
     }
 
     const summary: DailyMealSummary = {
@@ -219,5 +216,22 @@ export class MealRecordService {
     }
     await this.summaryRepo.create(summary);
     return summary;
+  }
+
+  private emptySummary(userId: string, date: string): DailyMealSummary {
+    return {
+      id: randomUUID(),
+      userId,
+      summaryDate: date,
+      mealCount: 0,
+      totalCalories: 0,
+      totalProtein: 0,
+      totalFat: 0,
+      totalCarbs: 0,
+      totalFiber: 0,
+      totalSugar: 0,
+      totalSodium: 0,
+      updatedAt: new Date().toISOString(),
+    };
   }
 }

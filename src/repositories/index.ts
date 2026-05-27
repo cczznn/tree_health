@@ -14,13 +14,15 @@ export interface IRepository<T> {
 export class InMemoryRepository<T extends { id: string }> implements IRepository<T> {
   protected store = new Map<string, T>();
 
+  constructor(private readonly entityName = 'Entity') {}
+
   async findById(id: string): Promise<T | null> {
     return this.store.get(id) ?? null;
   }
 
   async getById(id: string): Promise<T> {
     const entity = this.store.get(id);
-    if (!entity) throw new NotFoundError('Entity', id);
+    if (!entity) throw new NotFoundError(this.entityName, id);
     return entity;
   }
 
@@ -45,14 +47,14 @@ export class InMemoryRepository<T extends { id: string }> implements IRepository
   }
 
   async delete(id: string): Promise<void> {
-    if (!this.store.has(id)) throw new NotFoundError('Entity', id);
+    if (!this.store.has(id)) throw new NotFoundError(this.entityName, id);
     this.store.delete(id);
   }
 }
 
 export class FoodRepository extends InMemoryRepository<Food> {
   constructor() {
-    super();
+    super('Food');
     this.seedPresetFoods();
   }
 
