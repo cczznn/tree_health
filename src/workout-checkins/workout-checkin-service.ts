@@ -54,6 +54,6 @@ export class WorkoutCheckinService {
     if (!input.userId) throw new ValidationError('用户ID不能为空');
     if (!input.planId) throw new ValidationError('计划ID不能为空');
     if (!input.date) throw new ValidationError('日期不能为空');
-    if (!input.note || input.note.trim().length === 0) throw new ValidationError('备注不能为空');
+    // note is optional
   }
 }

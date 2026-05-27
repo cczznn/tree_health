@@ -1,18 +1,33 @@
 import { useEffect, useState, useMemo } from 'react'
 import { View, Text, Input } from '@tarojs/components'
 import { getMealRecords, searchFoods } from '../lib/api'
-import { buildDietDisplay, type DietDisplayData } from '../lib/page-data'
-import { filterFoods, formatCalories, type FoodItem } from '../lib/food-search'
+import { buildDietDisplay } from '../lib/page-data'
+import { filterFoods, formatCalories, formatNutrients, computeMealNutrients, type FoodItem } from '../lib/food-search'
 import { validateMealForm, getMealTypeLabel, MEAL_TYPES, type MealType, type MealFormInput } from '../lib/meal-form'
+
+interface LocalMeal {
+  id: string
+  foodId: string
+  foodName: string
+  amount: number
+  mealType: MealType
+  calories: number
+  protein: number
+  fat: number
+  carbs: number
+  fiber: number
+}
+
+const ZERO_TOTALS = { count: 0, calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0 }
 
 function DietPage() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [allFoods, setAllFoods] = useState<FoodItem[]>([])
-  const [apiMeals, setApiMeals] = useState<{ count: number; calories: number; protein: number } | null>(null)
+  const [apiMeals, setApiMeals] = useState<{ count: number; calories: number; protein: number; fat: number; carbs: number; fiber: number } | null>(null)
   const [foodsTotal, setFoodsTotal] = useState<number | null>(null)
   const [query, setQuery] = useState('')
-  const [meals, setMeals] = useState<Array<MealFormInput & { id: string; calories: number }>>([])
+  const [meals, setMeals] = useState<LocalMeal[]>([])
 
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null)
   const [amount, setAmount] = useState('')
@@ -23,7 +38,14 @@ function DietPage() {
     const date = currentDate()
     Promise.all([getMealRecords(date), searchFoods('')])
       .then(([records, foods]) => {
-        setApiMeals({ count: records.summary.mealCount, calories: records.summary.totalCalories, protein: records.summary.totalProtein })
+        setApiMeals({
+          count: records.summary.mealCount,
+          calories: records.summary.totalCalories,
+          protein: records.summary.totalProtein,
+          fat: records.summary.totalFat,
+          carbs: records.summary.totalCarbs,
+          fiber: records.summary.totalFiber,
+        })
         setFoodsTotal(foods.total)
         setAllFoods(foods.data)
         setLoading(false)
@@ -34,10 +56,18 @@ function DietPage() {
       })
   }, [])
 
-  const localStats = useMemo(() => ({
-    count: meals.length,
-    calories: meals.reduce((sum, m) => sum + m.calories, 0),
-  }), [meals])
+  const localStats = useMemo(() => {
+    const totals = { ...ZERO_TOTALS }
+    for (const m of meals) {
+      totals.count++
+      totals.calories += m.calories
+      totals.protein += m.protein
+      totals.fat += m.fat
+      totals.carbs += m.carbs
+      totals.fiber += m.fiber
+    }
+    return totals
+  }, [meals])
 
   const displayData = useMemo(() => {
     if (loadError) return buildDietDisplay(null, null, loadError)
@@ -45,11 +75,10 @@ function DietPage() {
       return { recordSummary: '加载中', foodSummary: '加载中', loading: true, error: null }
     }
     return buildDietDisplay(
-      { summary: { mealCount: apiMeals.count, totalCalories: apiMeals.calories, totalProtein: apiMeals.protein } },
+      { summary: { mealCount: apiMeals.count, totalCalories: apiMeals.calories, totalProtein: apiMeals.protein, totalFat: apiMeals.fat, totalCarbs: apiMeals.carbs, totalFiber: apiMeals.fiber } },
       foodsTotal,
       null,
-      localStats.count,
-      localStats.calories,
+      localStats,
     )
   }, [apiMeals, foodsTotal, localStats, loadError])
 
@@ -77,8 +106,11 @@ function DietPage() {
     }
     if (!selectedFood) return
 
-    const calories = Math.round(selectedFood.caloriesPer100g * parseFloat(amount))
-    setMeals((prev) => [{ id: `local-${Date.now()}`, foodId: selectedFood.id, foodName: selectedFood.name, amount: parseFloat(amount), mealType, calories }, ...prev])
+    const n = computeMealNutrients(selectedFood, parseFloat(amount))
+    setMeals((prev) => [{
+      id: `local-${Date.now()}`, foodId: selectedFood.id, foodName: selectedFood.name,
+      amount: parseFloat(amount), mealType, ...n,
+    }, ...prev])
     setSelectedFood(null)
     setFormErrors([])
   }
@@ -112,9 +144,12 @@ function DietPage() {
           <Text className='card__title' style={{ marginBottom: '16rpx' }}>
             记录：{selectedFood.name}
           </Text>
+          <Text style={{ fontSize: '22rpx', color: '#6b7280', display: 'block', marginBottom: '16rpx' }}>
+            {formatNutrients(selectedFood)}
+          </Text>
 
           <View style={{ marginBottom: '16rpx' }}>
-            <Text className='card__text' style={{ marginBottom: '8rpx' }}>份量（每份 = 100g）</Text>
+            <Text style={{ fontSize: '24rpx', color: '#6b7280', marginBottom: '8rpx', display: 'block' }}>份量（每份 = 100g）</Text>
             <Input
               className='search-input'
               type='digit'
@@ -125,7 +160,7 @@ function DietPage() {
           </View>
 
           <View style={{ marginBottom: '16rpx' }}>
-            <Text className='card__text' style={{ marginBottom: '8rpx' }}>餐次</Text>
+            <Text style={{ fontSize: '24rpx', color: '#6b7280', marginBottom: '8rpx', display: 'block' }}>餐次</Text>
             <View className='tag-row'>
               {MEAL_TYPES.map((type) => (
                 <View
@@ -174,6 +209,7 @@ function DietPage() {
                 <View>
                   <Text className='food-item__name'>{food.name}</Text>
                   <Text className='food-item__calories'>{formatCalories(food)}</Text>
+                  <Text className='food-item__calories'>{formatNutrients(food)}</Text>
                 </View>
                 <Text className='card__action' style={{ fontWeight: '600' }}>+ 记录</Text>
               </View>
@@ -196,6 +232,9 @@ function DietPage() {
                 <Text className='food-item__name'>{meal.foodName}</Text>
                 <Text className='food-item__calories'>
                   {getMealTypeLabel(meal.mealType)} · {meal.amount} 份 · {meal.calories} kcal
+                </Text>
+                <Text className='food-item__calories'>
+                  蛋白质 {meal.protein}g · 脂肪 {meal.fat}g · 碳水 {meal.carbs}g · 纤维 {meal.fiber}g
                 </Text>
               </View>
             </View>

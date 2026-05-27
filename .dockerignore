@@ -1,0 +1,8 @@
+node_modules
+.swc
+.tmp
+.npm-cache
+dist
+.git
+*.md
+tests

@@ -192,7 +192,7 @@ describe('Meal Records API 集成测试', () => {
       .get('/meal-records?date=2026-05-24')
       .set('X-User-Id', 'test-user');
 
-    expect(oldDay.body.summary).toBeNull();
+    expect(oldDay.body.summary.mealCount).toBe(0);
     expect(newDay.body.summary.mealCount).toBe(1);
   });
 

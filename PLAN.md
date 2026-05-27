@@ -489,24 +489,52 @@
 ## T12. 端到端联调、错误状态、验收补强
 
 ### 目标
-把各模块串联成完整流程，补齐错误处理、边界场景和验收缺口。
+把各模块串联成完整流程，补齐错误处理、边界场景和验收缺口。T12 已在独立 worktree `E:/6/ai/last-t12` 中完成。
 
 ### 涉及文件
-- `tests/e2e/**` 或集成测试目录
-- `src/**` 中的集成边界代码
-- 任何缺失的错误态组件
+- `src/server.ts`、`src/app-context.ts`
+- `src/api/workout-checkins.ts`、`src/api/body-metrics.ts`、`src/api/recommendations.ts`（新建）
+- `src/api/foods.ts`、`src/api/stats.ts`、`src/api/meal-records.ts`（修改）
+- `src/db/connection.ts`、`src/db/schema.ts`、`src/db/seed.ts`（新建）
+- `src/lib/api.ts`、`src/lib/page-data.ts`、`src/lib/food-search.ts`、`src/pages/diet.tsx`（修改）
+- `Dockerfile`、`docker-compose.yml`、`.dockerignore`、`.github/workflows/ci.yml`（新建）
+- `config/index.ts`、`src/index.html`（新建/修改）
+- `tests/lib/api.test.ts`、`tests/api/stats-api.test.ts`、`tests/api/meal-records-api.test.ts`（修改）
 
 ### 预期实现要点
-- 验证完整主链路：搜索食物 → 记录饮食 → 统计更新 → 生成建议
-- 验证健身计划生成与打卡链路
-- 验证体重/围度记录与趋势
-- 补齐空状态、异常状态、重试策略
+- 创建 Express Server 入口（`src/server.ts`），挂载 7 个 API 路由 + health check + serve H5 前端
+- 补充缺失 API 路由：workout-checkins（GET/POST）、body-metrics（GET/POST）、recommendations（POST）
+- MySQL 数据库层：`mysql2` 连接池 + 8 张表 schema + 100 条预置食物 seed + docker-compose（MySQL 8.0）
+- 前端 API 层改造：删除 mock 数据，H5 模式用 `fetch()` 调真实后端 API
+- 前后端数据格式对齐：stats API 返回扁平格式、meal-records API 空数据返回零值、body-metrics 无数据不抛错
+- 完整营养素记录：`FoodItem` 增加全部营养素字段，`computeMealNutrients()` 按份量计算，搜索结果/记录表单/本次添加/今日汇总全部展示完整营养素
+- 内存数据预置：100 条食物 + 默认健身计划，MySQL 不可用时自动回退内存模式
+- Docker 多阶段构建 + CI（GitHub Actions：typecheck → test → docker build）
+- 端到端验证：server 启动 → API 返回数据 → 前端页面正常渲染 → 各页面交互可用
 
 ### 验证步骤
-1. 先写失败的端到端场景测试
-2. 运行确认主路径为红
-3. 补齐实现后转绿
-4. 回归测试所有核心模块
+1. `npm run build:h5` 构建成功，`dist/` 输出 H5 静态文件
+2. `npx tsx src/server.ts` 启动，`curl /api/health` 返回 200
+3. 浏览器访问 `http://localhost:3000`，5 个 tab 页正常渲染
+4. 搜索食物 → 记录饮食 → 统计更新完整链路
+5. 健身计划生成 → 打卡 → 打卡历史
+6. 体重/围度记录 → 趋势计算 → 历史列表
+7. 空状态、错误状态均有明确反馈
+8. `npm run typecheck` 通过，113 个测试全绿
+
+### 结果记录
+- 在 `E:/6/ai/last-t12` worktree 中完成所有端到端联调
+- 发现并修复关键问题：
+  - Express 5 `app.get('*')` 不支持 → 改用 `app.use()`
+  - ESM 模式下 `__dirname` 不可用 → `fileURLToPath(import.meta.url)`
+  - 内存仓储无 workout plan → `app-context` 初始化时预置
+  - Stats API 返回嵌套格式不匹配 → 改为扁平格式
+  - body-metrics `getTrend` 无数据抛错 → API 层 catch 返回 null
+  - checkin `note` 强制非空 → 改为可选
+  - Body metrics POST 缺少 `metricDate` → API 层自动补默认值
+  - 本地 meal 蛋白质用 `calories × 0.17` 估算错误 → 改存真实营养素值
+  - Alpine 镜像缺少 glibc → Dockerfile 改用 Debian
+- 测试保持 113 个全绿，typecheck 通过，构建成功
 
 ### 依赖
 - T3-T11
@@ -520,7 +548,7 @@
 
 ### 涉及文件
 - `Dockerfile`
-- `docker-compose.yml`（如适用）
+- `docker-compose.yml`
 - `.github/workflows/**`
 - `README.md`
 

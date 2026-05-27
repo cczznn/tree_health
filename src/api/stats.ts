@@ -18,8 +18,22 @@ export function createStatsRouter(): Router {
       const date = getQueryValue(req.query.date);
       if (!date) throw new ValidationError('日期不能为空');
       const goalType = getGoalType(req.query.goalType);
-      const data = await service.getDailyStats(userId, date, goalType);
-      res.json({ data });
+      const result = await service.getDailyStats(userId, date, goalType);
+      const summary = result.summary
+      res.json({
+        data: {
+          date,
+          mealCount: summary?.mealCount ?? 0,
+          totalCalories: summary?.totalCalories ?? 0,
+          totalProtein: summary?.totalProtein ?? 0,
+          totalFat: summary?.totalFat ?? 0,
+          totalCarbs: summary?.totalCarbs ?? 0,
+          totalFiber: summary?.totalFiber ?? 0,
+          totalSugar: summary?.totalSugar ?? 0,
+          totalSodium: summary?.totalSodium ?? 0,
+          goalType: goalType ?? 'maintain',
+        },
+      });
     } catch (err) {
       handleError(err, res);
     }

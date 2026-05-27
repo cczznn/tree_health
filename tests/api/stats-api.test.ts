@@ -42,8 +42,8 @@ describe('Stats API 集成测试', () => {
       .set('X-User-Id', 'user-1');
 
     expect(res.status).toBe(200);
-    expect(res.body.data.summary.summaryDate).toBe('2026-05-23');
-    expect(res.body.data.goalComparison.goalType).toBe('fat_loss');
+    expect(res.body.data.date).toBe('2026-05-23');
+    expect(res.body.data.goalType).toBe('fat_loss');
   });
 
   it('缺少日期应返回校验错误', async () => {

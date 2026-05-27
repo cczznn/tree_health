@@ -568,3 +568,126 @@
   - 未选中态：白色背景 + 灰色边框 `#d1d5db` + 深灰文字 `#374151`
 - **结果**：目标标签可正常点击切换，选中态文字清晰可见。
 - **学到的教训**：WeChat 小程序 CSS 类可靠性低于内联 style，全项目应保持一致的内联 style 策略。
+
+### 43. T12 环境搭建：创建 worktree 与 H5 构建配置
+
+- **时间戳**：2026-05-27
+- **任务编号**：T12（环境搭建）
+- **阶段**：环境搭建 / 问题定位
+- **触发技能**：`systematic-debugging`
+- **关键上下文**：基于最新 master 创建 `feature/t12-e2e-integration` worktree，完成 H5 模式的前后端联调环境搭建。
+- **动作**：
+  - `git worktree add ../last-t12 -b feature/t12-e2e-integration`，安装依赖（使用 `--legacy-peer-deps` + 项目内 `.npm-cache`）
+  - 安装 `@tarojs/plugin-platform-h5`、`tsx` 等 H5 构建所需依赖
+  - 修复 Taro 4.2 H5 构建报错：`prebundle` 需配置为 `compiler: { prebundle: { enable: false } }`
+  - 创建 `src/index.html` 作为 H5 模板
+- **结果**：`npm run build:h5` 构建成功，`dist/` 输出 H5 静态文件。
+- **学到的教训**：
+  - Taro 4.x H5 构建需要显式安装 `@tarojs/plugin-platform-h5`，不是内置的
+  - `compiler.prebundle` 必须显式配置，否则 webpack5-runner 内部报 undefined
+
+### 44. T12 实现：Express Server 入口与缺失路由
+
+- **时间戳**：2026-05-27
+- **任务编号**：T12（Express Server）
+- **阶段**：实现 / TDD
+- **触发技能**：`test-driven-development`
+- **关键上下文**：项目已有 Express 路由处理器（`src/api/`），但缺少 server 入口和 workout-checkins、body-metrics、recommendations 三个 API 路由。
+- **动作**：
+  - 新建 `src/server.ts`：创建 Express app → 挂载 7 个 API 路由 → health check → serve `dist/` 静态文件
+  - 新建 `src/api/workout-checkins.ts`：GET/POST 打卡接口
+  - 新建 `src/api/body-metrics.ts`：GET/POST 身体数据接口
+  - 新建 `src/api/recommendations.ts`：POST 推荐生成接口
+  - 更新 `src/app-context.ts`：增加 `workoutPlanRepo`、`workoutCheckinRepo`、`bodyMetricRepo`
+  - 修复多个 Express 5 兼容问题：`app.get('*')` → `app.use()`、`__dirname` 在 ESM 中不可用 → `fileURLToPath`
+  - 修复 `src/api/foods.ts`：使用共享 `foodRepo`（`getAppContext()`），而非新建空 `FoodRepository`
+- **结果**：
+  - `npx tsx src/server.ts` 启动成功，`curl /api/health` 返回 200
+  - 所有 API 端点可通过 curl 验证：foods、meal-records、stats、workout-plans、workout-checkins、body-metrics、recommendations
+  - H5 前端文件正常 serve，浏览器打开 `http://localhost:3000` 展示完整页面
+- **学到的教训**：
+  - Express 5 的 path-to-regexp 不支持 `*` 通配符，需改用 `app.use()` 做 SPA fallback
+  - `package.json` 中 `"type": "module"` 导致 `__dirname` 不可用，需 `fileURLToPath(import.meta.url)`
+
+### 45. T12 实现：前后端数据格式对齐
+
+- **时间戳**：2026-05-27
+- **任务编号**：T12（格式对齐）
+- **阶段**：实现 / 联调
+- **触发技能**：`systematic-debugging`
+- **关键上下文**：T11 前端使用 mock 数据时的格式与后端实际返回格式不匹配，需统一。
+- **动作**：
+  - 删除 `lib/api.ts` 中所有 mock 数据，替换为 `fetch()` 调用真实 API
+  - 修复 stats API 返回格式：从嵌套 `{ data: { summary: { ... } } }` 改为扁平 `{ data: { mealCount, totalCalories, ... } }`
+  - 修复 meal-records API：无记录时返回零值 `summary` 而非 `null`，避免前端崩溃
+  - 修复 body-metrics API：`getTrend` 无数据时返回 `null` 而非抛错
+  - 修复 workout-checkin：`note` 改为可选（前端允许空备注）
+  - 修复 body metrics POST：自动补 `metricDate` 默认值（今天）
+  - 更新 `tests/lib/api.test.ts`：mock 数据测试改为 mock fetch 测试
+  - 更新 `tests/api/stats-api.test.ts`、`meal-records-api.test.ts`：适配新返回格式
+- **结果**：
+  - 前端页面正常加载数据，首页显示 kcal/记录数/饮食摘要/计划摘要
+  - 饮食、计划、身体、我的四个 tab 页均可正常交互
+  - 113 个测试全部通过
+- **学到的教训**：
+  - SPEC 定义的 API 格式与实际实现必须逐字段对齐，否则前端反序列化会静默失败
+  - 无数据时返回零值对象比 `null` 更安全，省去前端大量判空逻辑
+
+### 46. T12 实现：内存数据预置与启动流程
+
+- **时间戳**：2026-05-27
+- **任务编号**：T12（内存预置）
+- **阶段**：实现
+- **触发技能**：`systematic-debugging`
+- **关键上下文**：启动 server 后页面显示"数据加载失败"，排查发现 in-memory repository 中没有预置 workout plan，导致 workout-checkins API 返回 404。
+- **动作**：
+  - `app-context.ts` 中 `beginNewAppContext()` 同步预置默认 workout plan（`wp-1`）
+  - `server.ts` 中数据库初始化改为 `dynamic import` + `Promise.race` 3 秒超时，MySQL 不可用时回退内存模式
+  - `server.ts` 添加请求日志中间件，方便调试
+- **结果**：
+  - 无需 MySQL 即可直接运行 `npx tsx src/server.ts`，3 秒内启动完成
+  - 100 条预置食物 + 默认健身计划就绪，所有 API 可正常响应
+  - 终端打印每次请求的 method/url，便于验证
+- **学到的教训**：
+  - 无数据库环境下的 fallback 机制是开发体验的关键
+  - 动态 import + 超时可以优雅处理可选依赖不可用的情况
+
+### 47. T12 实现：营养素完整记录与展示
+
+- **时间戳**：2026-05-27
+- **任务编号**：T12（营养素展示）
+- **阶段**：功能增强 / 联调完善
+- **触发技能**：`test-driven-development`
+- **关键上下文**：用户反馈添加白米饭(100g)后蛋白质显示 20g 而非 2.6g，排查发现本地 meal 未存储真实营养素值，蛋白质用 `calories × 0.17` 估算。
+- **动作**：
+  - 扩展 `FoodItem` 类型：增加 `proteinPer100g`、`fatPer100g`、`carbsPer100g`、`fiberPer100g`、`sugarPer100g`、`sodiumPer100g`
+  - 新建 `computeMealNutrients(food, amount)`：按份量计算全部营养素
+  - 新建 `formatNutrients(food)`：格式化展示完整营养素
+  - 更新 `buildDietDisplay`：`recordSummary` 展示蛋白质/脂肪/碳水/纤维
+  - 搜索结果列表每个食物展示完整营养素
+  - 饮食记录表单展示选中食物的营养素
+  - `本次添加`每条记录展示全部营养素
+- **结果**：
+  - 白米饭(100g) 蛋白质正确显示 2.6g
+  - 今日记录汇总展示全部营养素
+  - 113 个测试全绿
+
+### 48. T12 收尾：Docker 配置与 CI
+
+- **时间戳**：2026-05-27
+- **任务编号**：T12（Docker + CI）
+- **阶段**：容器化 / CI 配置
+- **触发技能**：无
+- **关键上下文**：课程要求 `docker-compose.yml`、CI 自动测试 + 构建镜像。
+- **动作**：
+  - 新建 `Dockerfile`：多阶段构建，builder 阶段 `npm run build:h5`，运行阶段 `npx tsx src/server.ts`
+  - 新建 `docker-compose.yml`：app + MySQL 8.0，健康检查等待 MySQL 就绪
+  - 新建 `.dockerignore`
+  - 新建 `.github/workflows/ci.yml`：test job（typecheck + vitest）+ build-docker job
+  - 修复 Dockerfile Alpine → Debian（Taro 原生依赖 `@tarojs/binding` 需要 glibc）
+- **结果**：
+  - 113 个测试通过，typecheck 通过，H5 构建成功
+  - Docker Hub 被墙问题待解决（用户配置镜像加速器后验证）
+- **学到的教训**：
+  - Alpine 镜像体积小但缺 glibc，Node.js 原生 addon 多的项目用 Debian 更稳
+  - `.dockerignore` 需保留 `config/`、`babel.config.cjs` 等构建所需文件

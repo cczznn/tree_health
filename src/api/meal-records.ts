@@ -46,7 +46,10 @@ export function createMealRecordsRouter(): Router {
       if (!date) throw new ValidationError('日期不能为空');
       const data = await mealRecordService.getMealRecordsByDate(userId, date);
       const summary = await mealRecordService.getSummaryByDate(userId, date);
-      res.json({ data, summary });
+      res.json({
+        data,
+        summary: summary ?? { mealCount: 0, totalCalories: 0, totalProtein: 0, totalFat: 0, totalCarbs: 0, totalFiber: 0, totalSugar: 0, totalSodium: 0 },
+      });
     } catch (err) {
       handleError(err, res);
     }

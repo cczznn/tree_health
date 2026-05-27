@@ -46,12 +46,22 @@ export interface DietDisplayData {
   error: string | null
 }
 
+export interface LocalMealTotals {
+  count: number
+  calories: number
+  protein: number
+  fat: number
+  carbs: number
+  fiber: number
+}
+
+type MealSummary = { mealCount: number; totalCalories: number; totalProtein: number; totalFat: number; totalCarbs: number; totalFiber: number }
+
 export function buildDietDisplay(
-  meals: MealRecordsResponse | { summary: { mealCount: number; totalCalories: number; totalProtein: number } } | null,
+  meals: (MealRecordsResponse | { summary: MealSummary }) | null,
   foodsTotal: number | null,
   error: string | null = null,
-  localMealCount = 0,
-  localMealCalories = 0,
+  local: LocalMealTotals = { count: 0, calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0 },
 ): DietDisplayData {
   if (error) {
     return { recordSummary: '加载失败', foodSummary: '加载失败', loading: false, error }
@@ -59,11 +69,14 @@ export function buildDietDisplay(
   if (!meals || foodsTotal === null) {
     return { recordSummary: '加载中', foodSummary: '加载中', loading: true, error: null }
   }
-  const totalCount = meals.summary.mealCount + localMealCount
-  const totalCalories = meals.summary.totalCalories + localMealCalories
-  const totalProtein = meals.summary.totalProtein + (localMealCount > 0 ? Math.round(localMealCalories * 0.17) : 0)
+  const s = meals.summary
+  const totalCalories = s.totalCalories + local.calories
+  const totalProtein = Math.round((s.totalProtein + local.protein) * 10) / 10
+  const totalFat = Math.round((s.totalFat + local.fat) * 10) / 10
+  const totalCarbs = Math.round((s.totalCarbs + local.carbs) * 10) / 10
+  const totalFiber = Math.round((s.totalFiber + local.fiber) * 10) / 10
   return {
-    recordSummary: `已记录 ${totalCount} 条，今日总能量 ${totalCalories} kcal，蛋白质 ${totalProtein} g`,
+    recordSummary: `已记录 ${s.mealCount + local.count} 条 · ${totalCalories} kcal · 蛋白质 ${totalProtein}g · 脂肪 ${totalFat}g · 碳水 ${totalCarbs}g · 纤维 ${totalFiber}g`,
     foodSummary: `可搜索食物 ${foodsTotal} 条，方便快速添加`,
     loading: false,
     error: null,
