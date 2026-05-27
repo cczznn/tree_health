@@ -1,0 +1,20 @@
+{
+  "miniprogramRoot": "dist/",
+  "compileType": "miniprogram",
+  "projectname": "last-health-miniapp",
+  "description": "T11 健康管理微信小程序",
+  "appid": "touristappid",
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": false
+  },
+  "condition": {
+    "miniprogram": {
+      "list": []
+    }
+  },
+  "compileHotReLoad": true
+}

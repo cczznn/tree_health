@@ -77,6 +77,7 @@ export interface WorkoutCheckin {
   date: string;
   status: CheckinStatus;
   note: string | null;
+  createdAt: string;
 }
 
 export interface BodyMetric {
