@@ -1,11 +1,12 @@
 import { Router, type Request, type Response } from 'express';
 import { FoodService, type CreateCustomFoodInputDTO } from '../foods/food-service';
-import { FoodRepository } from '../repositories';
 import { AppError, ValidationError } from '../domain/errors';
+import { getAppContext } from '../app-context';
 
 export function createFoodRouter(): Router {
   const router = Router();
-  const service = new FoodService(new FoodRepository());
+  const { foodRepo } = getAppContext();
+  const service = new FoodService(foodRepo);
 
   router.get('/', async (req: Request, res: Response) => {
     try {
