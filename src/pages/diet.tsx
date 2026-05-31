@@ -30,6 +30,8 @@ function DietPage() {
   const [amount, setAmount] = useState('')
   const [mealType, setMealType] = useState<MealType>('breakfast')
   const [formErrors, setFormErrors] = useState<string[]>([])
+  const [mealRecords, setMealRecords] = useState<Array<{ id: string; foodId: string; mealType: string; amount: number; calories: number; protein: number; fat: number; carbs: number; fiber: number; recordDate: string; note: string | null }>>([])
+  const [showRecords, setShowRecords] = useState(false)
 
   useEffect(() => {
     const date = currentDate()
@@ -45,6 +47,7 @@ function DietPage() {
         })
         setFoodsTotal(foods.total)
         setAllFoods(foods.data)
+        setMealRecords(records.data)
       })
       .catch((err: Error) => {
         setLoadError(err.message)
@@ -110,6 +113,7 @@ function DietPage() {
           carbs: records.summary.totalCarbs,
           fiber: records.summary.totalFiber,
         })
+        setMealRecords(records.data)
         setSelectedFood(null)
         setFormErrors([])
       })
@@ -125,9 +129,31 @@ function DietPage() {
         <Text className='page-subtitle'>搜索、记录、汇总</Text>
       </View>
 
-      <View className='card'>
-        <Text className='card__title'>今日记录</Text>
+      <View className='card' onClick={() => setShowRecords(!showRecords)}>
+        <View className='card__header'>
+          <Text className='card__title'>今日记录</Text>
+          <Text className='card__action'>{showRecords ? '收起 ▲' : '展开 ▼'}</Text>
+        </View>
         <Text className='card__text'>{displayData.recordSummary}</Text>
+        {showRecords && (
+          <View style={{ marginTop: '16rpx' }}>
+            {mealRecords.length === 0 ? (
+              <Text className='card__text' style={{ color: '#9ca3af' }}>暂无记录</Text>
+            ) : (
+              mealRecords.map((r) => (
+                <View key={r.id} className='food-item'>
+                  <View>
+                    <Text className='food-item__name'>{getMealTypeLabel(r.mealType as MealType)} · {r.amount}g</Text>
+                    <Text className='food-item__calories'>
+                      {r.calories} kcal · 蛋白质 {r.protein}g · 脂肪 {r.fat}g · 碳水 {r.carbs}g · 纤维 {r.fiber}g
+                    </Text>
+                    {r.note && <Text className='food-item__calories' style={{ color: '#07c160' }}>{r.note}</Text>}
+                  </View>
+                </View>
+              ))
+            )}
+          </View>
+        )}
       </View>
 
       {!selectedFood && (
