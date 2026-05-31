@@ -110,6 +110,15 @@ export async function addBodyMetric(input: { weight: number; waist: number | nul
   })
 }
 
+export async function addMealRecord(input: {
+  foodId: string; mealType: string; amount: number; unit: string; recordDate: string; note: string | null
+}) {
+  return request<{ data: unknown }>('/api/meal-records', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
 export async function getWorkoutCheckins() {
   return request<{ data: Array<{ id: string; planId: string; date: string; note: string | null }> }>(
     `/api/workout-checkins`,

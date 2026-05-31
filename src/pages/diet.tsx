@@ -1,8 +1,8 @@
 import { useEffect, useState, useMemo } from 'react'
 import { View, Text, Input } from '@tarojs/components'
-import { getMealRecords, searchFoods } from '../lib/api'
+import { getMealRecords, searchFoods, addMealRecord } from '../lib/api'
 import { buildDietDisplay } from '../lib/page-data'
-import { filterFoods, formatCalories, formatNutrients, computeMealNutrients, type FoodItem } from '../lib/food-search'
+import { filterFoods, formatCalories, formatNutrients, type FoodItem } from '../lib/food-search'
 import { validateMealForm, getMealTypeLabel, MEAL_TYPES, type MealType, type MealFormInput } from '../lib/meal-form'
 import { requireLogin } from '../lib/auth-store'
 
@@ -19,16 +19,12 @@ interface LocalMeal {
   fiber: number
 }
 
-const ZERO_TOTALS = { count: 0, calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0 }
-
 function DietPage() {
-  const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [allFoods, setAllFoods] = useState<FoodItem[]>([])
   const [apiMeals, setApiMeals] = useState<{ count: number; calories: number; protein: number; fat: number; carbs: number; fiber: number } | null>(null)
   const [foodsTotal, setFoodsTotal] = useState<number | null>(null)
   const [query, setQuery] = useState('')
-  const [meals, setMeals] = useState<LocalMeal[]>([])
 
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null)
   const [amount, setAmount] = useState('')
@@ -49,26 +45,11 @@ function DietPage() {
         })
         setFoodsTotal(foods.total)
         setAllFoods(foods.data)
-        setLoading(false)
       })
       .catch((err: Error) => {
-        setLoading(false)
         setLoadError(err.message)
       })
   }, [])
-
-  const localStats = useMemo(() => {
-    const totals = { ...ZERO_TOTALS }
-    for (const m of meals) {
-      totals.count++
-      totals.calories += m.calories
-      totals.protein += m.protein
-      totals.fat += m.fat
-      totals.carbs += m.carbs
-      totals.fiber += m.fiber
-    }
-    return totals
-  }, [meals])
 
   const displayData = useMemo(() => {
     if (loadError) return buildDietDisplay(null, null, loadError)
@@ -78,10 +59,8 @@ function DietPage() {
     return buildDietDisplay(
       { summary: { mealCount: apiMeals.count, totalCalories: apiMeals.calories, totalProtein: apiMeals.protein, totalFat: apiMeals.fat, totalCarbs: apiMeals.carbs, totalFiber: apiMeals.fiber } },
       foodsTotal,
-      null,
-      localStats,
     )
-  }, [apiMeals, foodsTotal, localStats, loadError])
+  }, [apiMeals, foodsTotal, loadError])
 
   const filtered = useMemo(() => filterFoods(allFoods, query), [allFoods, query])
 
@@ -108,13 +87,33 @@ function DietPage() {
     }
     if (!selectedFood) return
 
-    const n = computeMealNutrients(selectedFood, parseFloat(amount))
-    setMeals((prev) => [{
-      id: `local-${Date.now()}`, foodId: selectedFood.id, foodName: selectedFood.name,
-      amount: parseFloat(amount), mealType, ...n,
-    }, ...prev])
-    setSelectedFood(null)
-    setFormErrors([])
+    addMealRecord({
+      foodId: selectedFood.id,
+      mealType,
+      amount: parseFloat(amount),
+      unit: '份',
+      recordDate: currentDate(),
+      note: null,
+    })
+      .then(() => {
+        // Reload data from backend
+        return getMealRecords(currentDate())
+      })
+      .then((records) => {
+        setApiMeals({
+          count: records.summary.mealCount,
+          calories: records.summary.totalCalories,
+          protein: records.summary.totalProtein,
+          fat: records.summary.totalFat,
+          carbs: records.summary.totalCarbs,
+          fiber: records.summary.totalFiber,
+        })
+        setSelectedFood(null)
+        setFormErrors([])
+      })
+      .catch((err: Error) => {
+        setFormErrors([err.message])
+      })
   }
 
   return (
@@ -225,24 +224,6 @@ function DietPage() {
         <Text className='card__text'>{displayData.recordSummary}</Text>
       </View>
 
-      {meals.length > 0 && (
-        <View className='card'>
-          <Text className='card__title'>本次添加</Text>
-          {meals.map((meal) => (
-            <View key={meal.id} className='food-item'>
-              <View>
-                <Text className='food-item__name'>{meal.foodName}</Text>
-                <Text className='food-item__calories'>
-                  {getMealTypeLabel(meal.mealType)} · {meal.amount} 份 · {meal.calories} kcal
-                </Text>
-                <Text className='food-item__calories'>
-                  蛋白质 {meal.protein}g · 脂肪 {meal.fat}g · 碳水 {meal.carbs}g · 纤维 {meal.fiber}g
-                </Text>
-              </View>
-            </View>
-          ))}
-        </View>
-      )}
     </View>
   )
 }
