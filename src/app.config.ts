@@ -10,7 +10,6 @@ export default defineAppConfig({
     color: '#6b7280',
     selectedColor: '#07c160',
     backgroundColor: '#ffffff',
-    borderStyle: 'white',
     list: [
       { pagePath: 'pages/home', text: '首页' },
       { pagePath: 'pages/diet', text: '饮食' },

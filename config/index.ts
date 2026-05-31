@@ -23,6 +23,6 @@ export default defineConfig<Partial<UserConfigExport>>(() => ({
   h5: {
     devServer: { port: 10086 },
     publicPath: '/',
-    router: { mode: 'browser' },
+    router: { mode: 'hash' },
   },
 }))

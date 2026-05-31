@@ -24,6 +24,28 @@ page {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* kill Taro tabbar outlines — universal selector for the entire tabbar tree */
+taro-tabbar,
+taro-tabbar * {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+/* hide tabbar icons (keep text only) */
+taro-tabbar .taro-tabbar__icon,
+.taro_page.taro_tabbar_page taro-tabbar img,
+.taro_page.taro_tabbar_page taro-tabbar [class*="icon"] {
+  display: none !important;
+}
+
+/* make tabbar item text the right size */
+.taro_page.taro_tabbar_page taro-tabbar {
+  font-size: 14px;
+}
+
 .app-shell {
   min-height: 100vh;
   padding-bottom: 120rpx;
