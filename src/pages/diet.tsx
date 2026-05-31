@@ -125,6 +125,11 @@ function DietPage() {
         <Text className='page-subtitle'>搜索、记录、汇总</Text>
       </View>
 
+      <View className='card'>
+        <Text className='card__title'>今日记录</Text>
+        <Text className='card__text'>{displayData.recordSummary}</Text>
+      </View>
+
       {!selectedFood && (
         <View className='card'>
           <Input
@@ -241,11 +246,6 @@ function DietPage() {
           ))}
         </View>
       )}
-
-      <View className='card'>
-        <Text className='card__title'>今日记录</Text>
-        <Text className='card__text'>{displayData.recordSummary}</Text>
-      </View>
 
     </View>
   )
