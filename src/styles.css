@@ -34,11 +34,16 @@ taro-tabbar * {
   background: transparent !important;
 }
 
-/* hide tabbar icons (keep text only) */
-taro-tabbar .taro-tabbar__icon,
-.taro_page.taro_tabbar_page taro-tabbar img,
-.taro_page.taro_tabbar_page taro-tabbar [class*="icon"] {
+/* hide WeUI tabbar icon images — these cause the ugly square boxes */
+.weui-tabbar__icon,
+img.weui-tabbar__icon {
   display: none !important;
+}
+
+/* ensure no borders on weui tabbar items */
+.weui-tabbar__item {
+  outline: none !important;
+  border: none !important;
 }
 
 /* make tabbar item text the right size */
