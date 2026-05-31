@@ -1,6 +1,6 @@
 # T11 健康管理小程序
 
-面向大众用户的轻量健康管理应用，支持饮食记录、营养统计、健身计划、运动打卡、身体数据追踪和 AI 推荐。
+面向大众用户的轻量健康管理应用，支持注册登录、饮食记录（拼音首字母分类搜索）、营养统计、健身计划与打卡、身体数据追踪、AI 推荐。
 
 基于 **Taro 4.2 + React 18 + TypeScript** 前端，**Express + Node.js** 后端，**MySQL 8.0** 数据库。
 
@@ -76,8 +76,10 @@ npm run build:weapp
 | GET | `/api/body-metrics` | 获取身体数据 |
 | POST | `/api/body-metrics` | 新增身体数据 |
 | POST | `/api/recommendations/generate` | 生成 AI 推荐 |
+| POST | `/api/auth/register` | 用户注册 |
+| POST | `/api/auth/login` | 用户登录 |
 
-所有请求需带 `x-user-id` 请求头（demo 用户为 `demo-user`）。
+所有请求需带 `x-user-id` 请求头。预置管理员账号：`admin` / `admin123`。
 
 ## 目录结构
 
