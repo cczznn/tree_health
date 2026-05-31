@@ -26,6 +26,19 @@ npx tsx src/server.ts
 
 MySQL 不可用时自动回退 **内存存储模式**，功能完整可用，数据不持久化。
 
+### 云部署
+
+**阿里云 ECS 已部署**：http://47.116.36.135:3000
+
+部署命令（Ubuntu 22.04）：
+```bash
+apt update && apt install git docker-compose -y
+systemctl start docker
+git clone https://github.com/cczznn/tree_health.git
+cd tree_health
+docker-compose up -d
+```
+
 ### 微信小程序
 
 ```bash

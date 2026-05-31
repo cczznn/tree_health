@@ -544,30 +544,38 @@
 ## T13. Docker / CI / 运行文档
 
 ### 目标
-完成交付所需的容器化、持续集成与运行说明。
+完成交付所需的容器化、持续集成与运行说明。T13 已在独立 worktree `E:/6/ai/last-t13` 中完成。
 
 ### 涉及文件
-- `Dockerfile`
-- `docker-compose.yml`
-- `.github/workflows/**`
-- `README.md`
+- `Dockerfile`（T12 已创建，T13 无修改）
+- `docker-compose.yml`（T12 已创建，T13 无修改）
+- `.github/workflows/ci.yml`（T12 已创建，T13 修复 CI 兼容性）
+- `README.md`（新建）
+- `REFLECTION.md`（新建）
 
 ### 预期实现要点
-- 单条 `docker build` 和 `docker run` 可运行项目
-- CI 自动执行测试和镜像构建
-- README 说明安装、运行、端口、环境变量、目录结构
+- 单条 `docker-compose up` 可运行完整项目（app + MySQL）
+- CI 自动执行 typecheck + test + docker build
+- README 说明安装、运行、端口、环境变量、目录结构、API 端点
+- REFLECTION.md 1500-2500 字反思报告
+
+### 结果记录
+- 在 `E:/6/ai/last-t13` worktree 中完成
+- README.md：包含 Docker/本地/微信小程序三种运行方式、15 个 API 端点表、目录结构树、技术栈
+- REFLECTION.md：约 2200 字，覆盖 9 个课程要求问题
+- CI 修复：`npm ci` → `npm install` 解决跨平台兼容；测试 mock 补充营养素字段；API 返回类型从 `unknown` 改为具体类型
+- 云部署：阿里云 ECS（Ubuntu 22.04），`docker-compose up -d` 部署，公网地址 `http://47.116.36.135:3000`
+- Open Design 120+ 技能全局安装到 Claude Code
+- 113 测试全绿，typecheck 通过，构建成功
 
 ### 验证步骤
-1. 先写失败测试或检查脚本（例如 CI 中的测试命令失败即阻塞）
-2. 构建镜像，确认首次可能失败并逐步修正
-3. 在容器中运行服务
-4. 验证 CI 配置能触发测试与构建
+1. `npm run build:h5` 构建成功
+2. `docker-compose up -d` 启动 app + MySQL，`curl /api/health` 返回 200
+3. 浏览器访问 `http://localhost:3000` → 5 个 tab 页正常
+4. 浏览器访问 `http://47.116.36.135:3000` → 云部署正常
 
 ### 依赖
 - T1-T12
-
-### 可并行
-- 后期可与文档收尾并行，但建议功能稳定后集中完成
 
 ---
 

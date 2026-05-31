@@ -691,3 +691,75 @@
 - **学到的教训**：
   - Alpine 镜像体积小但缺 glibc，Node.js 原生 addon 多的项目用 Debian 更稳
   - `.dockerignore` 需保留 `config/`、`babel.config.cjs` 等构建所需文件
+
+### 49. T12 CI 兼容性修复
+
+- **时间戳**：2026-05-27
+- **任务编号**：T12（CI 修复）
+- **阶段**：调试 / CI 修复
+- **触发技能**：`systematic-debugging`
+- **关键上下文**：GitHub Actions CI test job 在 Ubuntu 上失败，本地 Windows 通过。
+- **动作**：
+  - 排查发现三个问题：
+    1. `npm ci` 严格按 Windows lockfile 安装，Ubuntu 上平台特有依赖缺失
+    2. `tests/lib/food-search.test.ts` mock 数据缺少 `FoodItem` 新增的 6 个营养素字段
+    3. `addBodyMetric` / `addWorkoutCheckin` API 返回类型为 `unknown`，导致 plan.tsx / body.tsx 类型推断错误
+  - 修复：`npm ci` → `npm install`、mock 补充字段、API 返回类型改为具体类型
+  - 添加 `.swc/` `.tmp/` 到 `.gitignore`
+- **结果**：CI 全部通过，typecheck + 113 tests + docker build 均成功。
+- **学到的教训**：
+  - `npm ci` 跨平台部署（Windows → Ubuntu）需改用 `npm install`
+  - 类型修改必须同步更新全部测试 mock，否则本地通过但 CI 报错
+
+### 50. T13 实现：README 与 REFLECTION
+
+- **时间戳**：2026-05-31
+- **任务编号**：T13（文档）
+- **阶段**：文档收尾
+- **触发技能**：无
+- **关键上下文**：完成课程交付所需的 README.md 和 REFLECTION.md。
+- **动作**：
+  - 基于最新 master 创建 `feature/t13-docker-docs` worktree
+  - 编写 `README.md`：项目简介、快速开始（Docker/本地/微信小程序）、端口与环境变量表、15 个 API 端点列表、目录结构树、测试命令、技术栈
+  - 编写 `REFLECTION.md`：约 2200 字，覆盖 9 个课程要求问题
+- **结果**：
+  - README.md 和 REFLECTION.md 已合并到 master
+  - 113 个测试通过，typecheck 通过
+- **学到的教训**：
+  - README 应该包含"一键运行"命令，降低验收门槛
+
+### 51. 云部署：阿里云 ECS
+
+- **时间戳**：2026-05-31
+- **任务编号**：T13（云部署）
+- **阶段**：部署上线
+- **触发技能**：`systematic-debugging`
+- **关键上下文**：课程要求提供截止日期前可访问的公网地址。
+- **动作**：
+  - 创建阿里云 ECS 实例（Ubuntu 22.04，1 核 2GB，按量付费）
+  - 配置安全组放行 22/3000 端口
+  - SSH 登录，安装 Docker + git
+  - 配置 Docker 镜像加速器（daocloud / 1ms.run）
+  - `git clone` 项目 → `docker-compose up -d` 启动 app + MySQL
+  - 遇到 Docker Hub 拉镜像超时（阿里云默认镜像源被墙）→ 切换镜像源解决
+  - `npm ci` 在 CI 报跨平台兼容 → 改为 `npm install`
+- **结果**：
+  - 公网地址 `http://47.116.36.135:3000` 可正常访问
+  - 所有页面和 API 功能正常，MySQL 持久化存储
+- **学到的教训**：
+  - 阿里云 ECS 连 Docker Hub 需要配置国内镜像源
+  - 按量付费模式适合学生项目测试，用完可销毁实例节省费用
+  - 安全组规则需要手动放行自定义端口（如 3000），默认只开了 22/80
+
+### 52. Open Design 技能库安装
+
+- **时间戳**：2026-05-31
+- **任务编号**：无（工具链扩展）
+- **阶段**：工具链扩展
+- **触发技能**：无
+- **关键上下文**：用户希望安装 Open Design（120+ 设计技能）到 Claude Code。
+- **动作**：
+  - `git clone --depth 1` 克隆 Open Design 到 `~/.claude/plugins/open-design`
+  - 创建 `.claude-plugin/marketplace.json` 注册为本地市场 `open-design-dev`
+  - 通过 `claude plugin install open-design@open-design-dev` 全局安装
+- **结果**：Open Design 120+ 技能已安装，重启 Claude Code 后可用。
