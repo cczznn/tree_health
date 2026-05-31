@@ -4,6 +4,7 @@ import { getMealRecords, searchFoods } from '../lib/api'
 import { buildDietDisplay } from '../lib/page-data'
 import { filterFoods, formatCalories, formatNutrients, computeMealNutrients, type FoodItem } from '../lib/food-search'
 import { validateMealForm, getMealTypeLabel, MEAL_TYPES, type MealType, type MealFormInput } from '../lib/meal-form'
+import { requireLogin } from '../lib/auth-store'
 
 interface LocalMeal {
   id: string
@@ -93,6 +94,7 @@ function DietPage() {
   }
 
   const submitMeal = () => {
+    if (!requireLogin()) return
     const input: Partial<MealFormInput> = {
       foodId: selectedFood?.id,
       foodName: selectedFood?.name,

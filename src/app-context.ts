@@ -38,7 +38,7 @@ export function beginNewAppContext(): AppContext {
   if (!(currentContext.workoutPlanRepo as any).store.has(planId)) {
     (currentContext.workoutPlanRepo as any).store.set(planId, {
       id: planId,
-      userId: 'demo-user',
+      userId: 'system',
       title: '新手入门训练计划',
       goalType: 'maintain',
       frequencyPerWeek: 3,

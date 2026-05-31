@@ -18,10 +18,8 @@ export class WorkoutCheckinService {
 
   async createCheckin(input: CreateWorkoutCheckinInput): Promise<WorkoutCheckin> {
     this.validateInput(input);
-    const plan = await this.planRepo.getById(input.planId);
-    if (plan.userId !== input.userId) {
-      throw new NotFoundError('WorkoutPlan', input.planId);
-    }
+    // Verify plan exists (plans are shared templates, not user-owned)
+    await this.planRepo.getById(input.planId);
 
     const checkin: WorkoutCheckin = {
       id: randomUUID(),

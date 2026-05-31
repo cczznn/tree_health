@@ -26,7 +26,7 @@ function RegisterPage() {
         const body = await res.json()
         if (!res.ok) throw new Error(body.error?.message ?? '注册失败')
         setStoredUser(body.data)
-        window.location.reload()
+        window.location.href = '/'
       })
       .catch((err: Error) => setError(err.message))
   }

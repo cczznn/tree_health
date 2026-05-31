@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { View, Text, Input } from '@tarojs/components'
 import { getCurrentWorkoutPlan, getWorkoutCheckins, addWorkoutCheckin, type WorkoutPlanResponse } from '../lib/api'
+import { requireLogin } from '../lib/auth-store'
 
 function PlanPage() {
   const [plan, setPlan] = useState<WorkoutPlanResponse['data'] | null>(null)
@@ -20,6 +21,7 @@ function PlanPage() {
   }, [])
 
   const submitCheckin = () => {
+    if (!requireLogin()) return
     addWorkoutCheckin(note)
       .then(({ data }) => {
         setCheckins((prev) => [data, ...prev])

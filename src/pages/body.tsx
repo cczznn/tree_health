@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { View, Text, Input } from '@tarojs/components'
 import { getBodyMetrics, addBodyMetric } from '../lib/api'
 import { validateBodyForm, computeTrend, type BodyMetricEntry } from '../lib/body-data'
+import { requireLogin } from '../lib/auth-store'
 
 function BodyPage() {
   const [metrics, setMetrics] = useState<BodyMetricEntry[]>([])
@@ -21,6 +22,7 @@ function BodyPage() {
   const trend = useMemo(() => computeTrend(metrics), [metrics])
 
   const submitMetric = () => {
+    if (!requireLogin()) return
     const errors = validateBodyForm({
       weight: parseFloat(weight),
       waist: waist ? parseFloat(waist) : null,

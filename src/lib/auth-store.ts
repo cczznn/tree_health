@@ -24,5 +24,18 @@ export function clearStoredUser(): void {
 }
 
 export function getUserId(): string {
-  return getStoredUser()?.id ?? 'demo-user'
+  return getStoredUser()?.id ?? ''
+}
+
+export function requireLogin(): boolean {
+  if (!getStoredUser()) {
+    // eslint-disable-next-line no-alert
+    alert('请先登录后再操作')
+    return false
+  }
+  return true
+}
+
+export function isLoggedIn(): boolean {
+  return getStoredUser() !== null
 }
