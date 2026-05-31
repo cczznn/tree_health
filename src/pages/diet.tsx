@@ -150,7 +150,7 @@ function DietPage() {
           </Text>
 
           <View style={{ marginBottom: '16rpx' }}>
-            <Text style={{ fontSize: '24rpx', color: '#6b7280', marginBottom: '8rpx', display: 'block' }}>份量（每份 = 100g）</Text>
+            <Text style={{ fontSize: '24rpx', color: '#6b7280', marginBottom: '8rpx', display: 'block' }}>克重（g）</Text>
             <Input
               className='search-input'
               type='digit'
