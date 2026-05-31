@@ -97,10 +97,19 @@ page {
   padding: 16rpx 12rpx calc(16rpx + env(safe-area-inset-bottom));
 }
 
+.tab-bar * {
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
 .tab-item {
   flex: 1;
   text-align: center;
   color: var(--muted);
+  outline: none;
+  border: none;
+  background: none;
 }
 
 .tab-item--active {
@@ -108,7 +117,8 @@ page {
 }
 
 .tab-item__label {
-  font-size: 24rpx;
+  font-size: 28rpx;
+  font-weight: 500;
 }
 
 .search-input {
