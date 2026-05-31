@@ -763,3 +763,56 @@
   - 创建 `.claude-plugin/marketplace.json` 注册为本地市场 `open-design-dev`
   - 通过 `claude plugin install open-design@open-design-dev` 全局安装
 - **结果**：Open Design 120+ 技能已安装，重启 Claude Code 后可用。
+
+### 53. 注册登录功能实现
+
+- **时间戳**：2026-05-31
+- **任务编号**：无（功能增强）
+- **阶段**：实现 / TDD
+- **触发技能**：`test-driven-development`、`systematic-debugging`
+- **关键上下文**：项目尚无注册登录，SPEC 要求"需要登录与用户隔离"，当前写死 `demo-user` 不满足需求。
+- **动作**：
+  - 安装 `bcryptjs` 用于密码哈希
+  - 更新 `users` 表 schema：添加 `password_hash` 字段，`name` 设为 UNIQUE
+  - 新建 `src/auth/auth-service.ts`：注册（校验用户名/密码长度、查重、bcrypt 哈希）、登录（查用户、验密码）
+  - 新建 `src/auth/user-repository.ts`：InMemoryUserRepository，支持按名称查找和创建
+  - 新建 `src/api/auth.ts`：`POST /api/auth/register` + `POST /api/auth/login`
+  - 更新 `app-context.ts`：添加 `userRepo`，预置管理员 demo 账号（admin / admin123）
+  - 前端新建 `src/lib/auth-store.ts`：localStorage 存取用户信息
+  - 更新 `src/lib/api.ts`：`getUserId()` 从 auth-store 读取真实 userId
+  - 重写 `src/pages/me.tsx`：未登录显示登录/注册内联表单，已登录显示用户信息和退出按钮
+  - 添加 `requireLogin()` 守卫：饮食、身体、计划页面的提交操作未登录时弹出 `alert("请先登录后再操作")`
+  - 排查测试时发现 Docker 旧容器占用 3000 端口（`docker ps` 确认）→ `docker stop last-app-1` 解决
+  - 排查 `server.ts` 路由顺序问题：静态文件 + SPA fallback 放在 API 路由之后导致 POST 请求被拦截 → 调整为 static → API → SPA fallback
+- **结果**：
+  - 注册登录功能完整可用，5 个测试场景全部通过（注册/重复注册/登录/错误密码/弱密码）
+  - 数据按用户隔离：已登录用户的 API 请求带真实 userId，未登录操作被 `requireLogin` 阻断
+  - 预置管理员账号 admin / admin123
+  - 113 个测试全绿，typecheck 通过，H5 构建成功
+- **学到的教训**：
+  - `netstat` 查不到 Docker 容器的 LISTENING 状态，因为 Docker Desktop 在 Windows 上走 vpnkit 代理转发
+  - 排查端口占用应优先 `docker ps`，再 `netstat`
+  - Taro Input 不支持 `type="password"`，需用 `password` prop
+  - 页面跳转在 Taro H5 SPA 中不可靠，内联表单比独立页面更可靠
+  - `InMemoryUserRepository` 的 `store` 需为 `public` 才能从外部种子数据
+
+### 54. 饮食记录持久化修复
+
+- **时间戳**：2026-05-31
+- **任务编号**：无（bug 修复）
+- **阶段**：联调修复
+- **触发技能**：`systematic-debugging`
+- **关键上下文**：用户反馈刷新页面后添加的饮食记录消失，排查发现 `submitMeal` 只写入前端 React state，未调用后端 API。
+- **动作**：
+  - `lib/api.ts` 新增 `addMealRecord()` POST 函数
+  - 重写 `submitMeal`：改为 `addMealRecord()` → 成功后重新 `getMealRecords()` 刷新数据
+  - 删除本地 `meals` state 和 `localStats` useMemo（数据全部走后端）
+  - 删除"本次添加"UI 区块（数据已在"今日记录"汇总中体现）
+  - 将份量标签从"份量（每份 = 100g）"改为"克重（g）"
+- **结果**：
+  - 刷新页面后数据持久保留（内存模式下 server 重启前有效，MySQL 模式下永久持久化）
+  - 后端 `factor = input.amount / 100` 自动换算，前端直接传克重即可
+  - 113 个测试全绿
+- **学到的教训**：
+  - 前端 state 不等于持久化，数据写入必须走 API
+  - 先提交数据再重新拉取，比本地计算 + 服务端计算两套逻辑更可靠
