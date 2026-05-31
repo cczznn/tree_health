@@ -1,4 +1,5 @@
 import { FoodRepository, MealRecordRepository, DailyMealSummaryRepository, WorkoutPlanRepository, WorkoutCheckinRepository, BodyMetricRepository } from './repositories'
+import { InMemoryUserRepository } from './auth/user-repository'
 
 export interface AppContext {
   foodRepo: FoodRepository
@@ -7,6 +8,7 @@ export interface AppContext {
   workoutPlanRepo: WorkoutPlanRepository
   workoutCheckinRepo: WorkoutCheckinRepository
   bodyMetricRepo: BodyMetricRepository
+  userRepo: InMemoryUserRepository
 }
 
 let currentContext: AppContext | null = null
@@ -19,6 +21,7 @@ export function beginNewAppContext(): AppContext {
     workoutPlanRepo: new WorkoutPlanRepository(),
     workoutCheckinRepo: new WorkoutCheckinRepository(),
     bodyMetricRepo: new BodyMetricRepository(),
+    userRepo: new InMemoryUserRepository(),
   }
 
   // Seed default workout plan (workout-checkin API needs it)

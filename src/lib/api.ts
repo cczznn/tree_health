@@ -1,4 +1,5 @@
 import type { MealRecord, GoalType } from '../domain/types'
+import { getUserId } from './auth-store'
 
 export interface DailyStatsResponse {
   date: string
@@ -47,10 +48,6 @@ export interface WorkoutPlanResponse {
       }>
     }
   }
-}
-
-function getUserId(): string {
-  return 'demo-user'
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {

@@ -2,7 +2,7 @@ import fs from 'fs'
 import express from 'express'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { beginNewAppContext } from './app-context'
+import { beginNewAppContext, getAppContext } from './app-context'
 import { createFoodRouter } from './api/foods'
 import { createMealRecordsRouter } from './api/meal-records'
 import { createStatsRouter } from './api/stats'
@@ -10,6 +10,7 @@ import { createWorkoutPlansRouter } from './api/workout-plans'
 import { createWorkoutCheckinsRouter } from './api/workout-checkins'
 import { createBodyMetricsRouter } from './api/body-metrics'
 import { createRecommendationsRouter } from './api/recommendations'
+import { createAuthRouter } from './api/auth'
 
 const PORT = parseInt(process.env.PORT || '3000', 10)
 
@@ -33,7 +34,21 @@ async function main() {
     next()
   })
 
-  // API routes
+  // Health check
+  app.get('/api/health', (_req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() })
+  })
+
+  // Serve H5 frontend static files first
+  const __filename = fileURLToPath(import.meta.url)
+  const __dirname = path.dirname(__filename)
+  const distPath = path.join(__dirname, '..', 'dist')
+  if (fs.existsSync(distPath)) {
+    app.use(express.static(distPath))
+  }
+
+  // API routes — after static files, before SPA fallback
+  app.use('/api/auth', createAuthRouter(getAppContext().userRepo))
   app.use('/api/foods', createFoodRouter())
   app.use('/api/meal-records', createMealRecordsRouter())
   app.use('/api/stats', createStatsRouter())
@@ -42,17 +57,8 @@ async function main() {
   app.use('/api/body-metrics', createBodyMetricsRouter())
   app.use('/api/recommendations', createRecommendationsRouter())
 
-  // Health check
-  app.get('/api/health', (_req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() })
-  })
-
-  // Serve H5 frontend in production
-  const __filename = fileURLToPath(import.meta.url)
-  const __dirname = path.dirname(__filename)
-  const distPath = path.join(__dirname, '..', 'dist')
+  // SPA fallback — last, catches non-API non-static requests
   if (fs.existsSync(distPath)) {
-    app.use(express.static(distPath))
     app.use((_req, res) => {
       res.sendFile(path.join(distPath, 'index.html'))
     })

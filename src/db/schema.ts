@@ -3,7 +3,8 @@ import { getPool } from './connection'
 const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS users (
   id VARCHAR(36) PRIMARY KEY,
-  name VARCHAR(100) NOT NULL,
+  name VARCHAR(100) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
   goal_type ENUM('fat_loss', 'muscle_gain', 'maintain') NOT NULL DEFAULT 'maintain',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
