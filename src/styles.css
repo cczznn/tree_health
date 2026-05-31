@@ -13,6 +13,17 @@ page {
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
+/* kill ALL focus outlines in the entire app */
+*:focus,
+*:focus-visible,
+*:active {
+  outline: none !important;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
 .app-shell {
   min-height: 100vh;
   padding-bottom: 120rpx;
@@ -94,13 +105,23 @@ page {
   display: flex;
   background: rgba(255, 255, 255, 0.96);
   border-top: 1rpx solid var(--line);
-  padding: 16rpx 12rpx calc(16rpx + env(safe-area-inset-bottom));
+  padding: 12rpx 12rpx calc(12rpx + env(safe-area-inset-bottom));
+  z-index: 999;
 }
 
-.tab-bar * {
+/* aggressive reset for all tab bar descendants */
+.tab-bar,
+.tab-bar > *,
+.tab-bar > * > *,
+taro-tabbar,
+taro-tabbar > *,
+taro-tabbar-item {
   outline: none !important;
+  border: none !important;
   box-shadow: none !important;
-  -webkit-tap-highlight-color: transparent;
+  border-radius: 0 !important;
+  -webkit-tap-highlight-color: transparent !important;
+  background: transparent !important;
 }
 
 .tab-item {
@@ -110,6 +131,7 @@ page {
   outline: none;
   border: none;
   background: none;
+  padding: 8rpx 0;
 }
 
 .tab-item--active {
