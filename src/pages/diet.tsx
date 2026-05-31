@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { View, Text, Input } from '@tarojs/components'
 import { getMealRecords, searchFoods, addMealRecord } from '../lib/api'
 import { buildDietDisplay } from '../lib/page-data'
-import { filterFoods, formatCalories, formatNutrients, type FoodItem } from '../lib/food-search'
+import { filterFoods, formatCalories, formatNutrients, groupFoodsByLetter, type FoodItem } from '../lib/food-search'
 import { validateMealForm, getMealTypeLabel, MEAL_TYPES, type MealType, type MealFormInput } from '../lib/meal-form'
 import { requireLogin } from '../lib/auth-store'
 
@@ -63,6 +63,8 @@ function DietPage() {
   }, [apiMeals, foodsTotal, loadError])
 
   const filtered = useMemo(() => filterFoods(allFoods, query), [allFoods, query])
+
+  const foodGroups = useMemo(() => groupFoodsByLetter(allFoods), [allFoods])
 
   const selectFood = (food: FoodItem) => {
     setSelectedFood(food)
@@ -217,7 +219,28 @@ function DietPage() {
             ))
           )}
         </View>
-      ) : null}
+      ) : (
+        <View>
+          <View className='card'>
+            <Text className='card__title' style={{ marginBottom: '8rpx' }}>食物分类</Text>
+            <Text className='card__text'>共 {allFoods.length} 种食物，按拼音首字母分类</Text>
+          </View>
+          {foodGroups.map((group) => (
+            <View key={group.letter} className='card'>
+              <Text className='card__title' style={{ marginBottom: '12rpx', color: '#07c160' }}>{group.letter}</Text>
+              {group.foods.map((food) => (
+                <View key={food.id} className='food-item' onClick={() => selectFood(food)}>
+                  <View>
+                    <Text className='food-item__name'>{food.name}</Text>
+                    <Text className='food-item__calories'>{formatCalories(food)}</Text>
+                  </View>
+                  <Text className='card__action' style={{ fontWeight: '600' }}>+ 记录</Text>
+                </View>
+              ))}
+            </View>
+          ))}
+        </View>
+      )}
 
       <View className='card'>
         <Text className='card__title'>今日记录</Text>
