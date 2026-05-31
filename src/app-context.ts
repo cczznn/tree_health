@@ -24,6 +24,15 @@ export function beginNewAppContext(): AppContext {
     userRepo: new InMemoryUserRepository(),
   }
 
+  // Seed demo admin user (admin / admin123)
+  currentContext.userRepo.store.set('admin-user', {
+    id: 'admin-user',
+    name: 'admin',
+    password_hash: '$2b$10$IY1DyWzK//FAvXn1xCLGgeVyCbQhUAw5/5cZNDPh3ts5n66nSuJYK',
+    goal_type: 'maintain',
+    created_at: new Date().toISOString(),
+  })
+
   // Seed default workout plan (workout-checkin API needs it)
   const planId = 'wp-1'
   if (!(currentContext.workoutPlanRepo as any).store.has(planId)) {

@@ -1,7 +1,7 @@
 import type { UserRow } from './auth-service'
 
 export class InMemoryUserRepository {
-  private store = new Map<string, UserRow>()
+  store = new Map<string, UserRow>()
 
   async findByName(name: string): Promise<UserRow | null> {
     for (const user of this.store.values()) {
