@@ -211,13 +211,13 @@ describe('Food API 集成测试', () => {
   });
 
   describe('预置食物数据', () => {
-    it('初始化后预置食物为 100 条', async () => {
+    it('初始化后预置食物为 217 条', async () => {
       const res = await request(app)
         .get('/foods')
         .set('X-User-Id', 'test-user');
 
       const presetCount = res.body.data.filter((item: any) => item.sourceType === 'preset').length;
-      expect(presetCount).toBe(100);
+      expect(presetCount).toBe(217);
     });
 
     it('预置食物的 userId 必须为 null', async () => {

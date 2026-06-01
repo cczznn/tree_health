@@ -68,4 +68,31 @@ export class FoodService {
     validateFood(food);
     return this.repo.create(food);
   }
+
+  async updateCustomFood(id: string, input: CreateCustomFoodInput, userId: string): Promise<Food> {
+    const existing = await this.repo.getById(id);
+    if (existing.sourceType !== 'custom') throw new ValidationError('只能修改自定义食物');
+    if (existing.userId !== userId) throw new ValidationError('无权修改该食物');
+
+    const updated: Food = {
+      ...existing,
+      name: input.name,
+      caloriesPer100g: input.caloriesPer100g,
+      proteinPer100g: input.proteinPer100g,
+      fatPer100g: input.fatPer100g,
+      carbsPer100g: input.carbsPer100g,
+      fiberPer100g: input.fiberPer100g ?? null,
+      sugarPer100g: input.sugarPer100g ?? null,
+      sodiumPer100g: input.sodiumPer100g ?? null,
+    };
+    validateFood(updated);
+    return this.repo.update(id, updated);
+  }
+
+  async deleteCustomFood(id: string, userId: string): Promise<void> {
+    const existing = await this.repo.getById(id);
+    if (existing.sourceType !== 'custom') throw new ValidationError('只能删除自定义食物');
+    if (existing.userId !== userId) throw new ValidationError('无权删除该食物');
+    await this.repo.delete(id);
+  }
 }

@@ -13,4 +13,15 @@ export class InMemoryUserRepository {
   async create(user: UserRow): Promise<void> {
     this.store.set(user.id, { ...user })
   }
+
+  async findById(id: string): Promise<UserRow | null> {
+    return this.store.get(id) ?? null
+  }
+
+  async update(id: string, user: UserRow): Promise<UserRow> {
+    const existing = this.store.get(id)
+    if (!existing) throw new Error(`User ${id} not found`)
+    this.store.set(id, { ...user })
+    return user
+  }
 }

@@ -872,4 +872,112 @@
   - 空记录显示"暂无记录"
 - **学到的教训**：
   - 汇总信息放在页面顶部比底部更符合用户阅读习惯
+
+### 58. 自定义食物添加 / 编辑 / 删除 + 食物库扩充
+
+- **时间戳**：2026-06-01
+- **任务编号**：T6（扩展）
+- **阶段**：功能增强
+- **触发技能**：无
+- **关键上下文**：用户发现饮食页面没有自定义食物入口，要求添加创建、编辑、删除功能，并扩充预置食物库。前端 API 层缺少 `addCustomFood`、`updateCustomFood`、`deleteCustomFood`，后端 `PUT /api/foods/:id`、`DELETE /api/foods/:id` 也未暴露。
+- **动作**：
+  - 后端 `FoodService` 新增 `updateCustomFood` 和 `deleteCustomFood` 方法，校验只能操作自己的自定义食物
+  - `api/foods.ts` 新增 `PUT /:id` 和 `DELETE /:id` 路由
+  - 前端 `lib/api.ts` 新增 `addCustomFood`、`updateCustomFood`、`deleteCustomFood`
+  - `lib/food-search.ts` 的 `FoodItem` 接口增加 `sourceType`/`userId` 字段以区分预置/自定义
+  - 饮食页面新增 "+ 添加自定义食物" 按钮和完整表单（名称 *、热量 *、蛋白质 *、脂肪 *、碳水 *、纤维、糖、钠）
+  - 编辑功能：点击编辑后在食物下方展开内联编辑卡片（含字段标签），支持保存修改
+  - 删除功能：点击删除后弹出浏览器 `confirm()` 确认，确认后删除
+  - 自定义食物显示编辑/删除按钮，与预置食物区别展示
+  - 预设食物库从 103 条扩充到 217 条（新增蔬菜、水果、坚果、肉类、水产、饮料、零食、调味品、地方小吃等 11 个类别）
+  - 对应测试计数更新（100→216→217）
+- **结果**：
+  - `+ 记录`、`编辑`、`删除` 三个按钮同时显示在自定义食物旁
+  - 编辑表单在食物下方内联展开，带标签
+  - 删除有二次确认
+  - 113 测试全绿，18 个测试文件全绿
+- **学到的教训**：
+  - 后端 API 可能早已支持，但前端 UI 缺失会让用户感觉功能不存在
+  - Taro H5 中 `View` 渲染为 `<taro-view-core>` 自定义元素，`className`、`border`、`onClick` 均不可靠
+  - 修改这类问题时用原生 HTML 标签（`<div>`/`<span>`）或 Taro CSS 类都各有问题，最终用内联样式 + `px` 大写跳过 pxtransform + `className` 混合方案
+
+### 59. 首页 "饮水 3.2L" 假数据修复
+
+- **时间戳**：2026-06-01
+- **任务编号**：无（UI 修复）
+- **阶段**：UI 修复
+- **触发技能**：无
+- **关键上下文**：用户发现首页今日概览中"饮水 3.2L"是硬编码假数据，要求替换为真实数据。
+- **动作**：
+  - `HomeDisplayData` 接口增加 `totalProtein` 字段
+  - `buildHomeDisplay` 从 stats API 获取 `totalProtein` 并传入
+  - 首页"饮水 3.2L"替换为真实蛋白质数据
+- **结果**：首页显示真实的今日蛋白质摄入克数。
+- **学到的教训**：假 placeholder 数据容易被误认为真实功能，应该在原型阶段就明确标注或直接使用真实数据。
+
+### 60. 目标类型可修改
+
+- **时间戳**：2026-06-01
+- **任务编号**：无（功能增强）
+- **阶段**：功能增强
+- **触发技能**：无
+- **关键上下文**：用户只能在注册时选择目标类型（减脂/维持/增肌），注册后无法修改。要求在"我的"页面支持修改。
+- **动作**：
+  - `InMemoryUserRepository` 新增 `findById` 和 `update` 方法
+  - `IUserRepository` 接口同步扩展
+  - `AuthService` 新增 `updateGoalType(userId, goalType)` 方法
+  - `api/auth.ts` 新增 `PUT /goal` 路由
+  - 前端 `me.tsx` 登录后个人信息卡片显示"修改"按钮，点击展开目标标签（减脂/维持/增肌）+ 取消/保存
+- **结果**：用户登录后可在"我的"页面随时修改目标类型，修改后立即生效。
+- **学到的教训**：注册时设定的用户属性应始终支持后续修改，这是基本 UX 要求。
+
+### 61. MySQL 全数据持久化
+
+- **时间戳**：2026-06-01
+- **任务编号**：T12（扩展）
+- **阶段**：基础设施
+- **触发技能**：无
+- **关键上下文**：用户发现每次重启服务账号就会丢失，需要重新注册。根因是应用路由层始终使用内存仓库，MySQL seed 只写了初始数据但不被路由层使用。用户本地有 MySQL 8.0（root 密码 `a13386980045`）。
+- **动作**：
+  - 创建本地数据库：`CREATE DATABASE health_app` + 用户 `health` / `health123`
+  - 新增 `MysqlUserRepository` 实现用户 CRUD（findByName/findById/create/update）
+  - 修复 ISO datetime 转 MySQL datetime 格式问题（`T` 和 `Z` 不兼容）
+  - 新增 `src/repositories/mysql-repos.ts`：MysqlFoodRepository、MysqlMealRecordRepository、MysqlDailyMealSummaryRepository、MysqlWorkoutPlanRepository、MysqlWorkoutCheckinRepository、MysqlBodyMetricRepository
+  - 所有 MySQL repo 使用 `pool.execute()` 与参数化查询
+  - `app-context.ts` 改为接受可选的 `MysqlUserRepository` 参数，MySQL 可用时所有 repo 使用 MySQL 实现，不可用时回退内存
+  - `server.ts`：MySQL seed 成功后自动创建 `MysqlUserRepository` 并传入 `beginNewAppContext`
+  - `seed.ts`：种子数据增加 admin 用户（bcrypt 密码）和默认健身计划
+  - 种子数据增加 workout plan 写入 workout_plans 表
+- **结果**：
+  - 重启服务后数据不丢失
+  - MySQL 表数据量验证：users 3、foods 217、workout_plans 1
+  - 113 测试全绿（内存模式不受影响）
+- **学到的教训**：
+  - 数据库 seed 和路由层数据源是两回事，seed 写 MySQL 不代表路由层用 MySQL
+  - MySQL `TIMESTAMP` 列不接受 ISO 8601 格式（`T`/`Z`），需转换为 `YYYY-MM-DD HH:MM:SS`
+  - ESM 中 `require()` 不可靠，静态 import 更安全
+
+### 62. 按钮样式与取消按钮修复
+
+- **时间戳**：2026-06-01
+- **任务编号**：无（UI 修复）
+- **阶段**：UI 调试
+- **触发技能**：`systematic-debugging`
+- **关键上下文**：
+  - 按钮边框始终不显示：排查发现 Taro postcss-pxtransform 将 CSS 中的 `1px` 转为 `0.025rem`（约 0.4px 肉眼不可见），内联样式中的 `rpx` 浏览器不识别，`className` 在 `<taro-view-core>` 上不可靠
+  - 顶部"添加自定义食物"取消按钮无效，但内联编辑取消按钮有效：根因是三元表达式 `{!showCustomForm ? A : B}` 在 Taro H5 中切换时干扰 click 事件，改为两个独立 `{!showCustomForm && A}` `{showCustomForm && B}` 块解决
+  - 删除按钮无反应：confirm 弹窗使用 `window.confirm()` 兜底 + 传入 food 参数直接调用 `confirmDeleteFood(food)`
+- **动作**：
+  - CSS `.btn-action` 使用大写 `PX` 跳过 pxtransform 转换，border 设为 `2PX` 确保可见
+  - 按钮文字统一 `font-size: 24rpx`，padding `6PX 16PX`
+  - 顶部表单从三元改为 `&&` 块
+  - 删除确认从内联卡片改为 `window.confirm()` 浏览器原生弹窗
+  - 在 `handleDeleteFood` 中直接传入 food 参数
+- **结果**：按钮边框可见（2px 绿色/红色），点击删除弹出 confirm，取消按钮正常收起表单，间距统一。
+- **学到的教训**：
+  - Taro H5 的 `<taro-view-core>` 自定义元素对 CSS class、border、onClick 的支持与原生 `<div>` 不同，需反复测试
+  - `rpx` 在 CSS 文件中有效但在内联 style 中无效
+  - 小写 `px` 会被 postcss-pxtransform 转换，大写 `PX` 可跳过
+  - 三元表达式在 Taro 的条件渲染中不如 `&&` 可靠
+  - `window.confirm()` 比自定义确认 UI 在 Taro H5 中更可靠
   - 渐进式展示（汇总 → 详情）在不加页面跳转的前提下增加信息密度

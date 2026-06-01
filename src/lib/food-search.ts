@@ -1,6 +1,8 @@
 export interface FoodItem {
   id: string
   name: string
+  sourceType?: string
+  userId?: string | null
   caloriesPer100g: number
   proteinPer100g: number
   fatPer100g: number

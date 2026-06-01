@@ -99,9 +99,9 @@ describe('FoodService', () => {
   });
 
   describe('预置食物数据', () => {
-    it('初始化后预置食物为 100 条', async () => {
+    it('初始化后预置食物为 217 条', async () => {
       const results = await service.searchFoods('', 'user-1');
-      expect(results.filter((food) => food.sourceType === 'preset')).toHaveLength(100);
+      expect(results.filter((food) => food.sourceType === 'preset')).toHaveLength(217);
     });
 
     it('预置食物的 userId 必须为 null', async () => {

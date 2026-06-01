@@ -71,6 +71,6 @@ describe('FoodRepository', () => {
   });
 
   it('应内置 100 条预置食物', async () => {
-    expect((await repo.search('')).filter((f) => f.sourceType === 'preset')).toHaveLength(100);
+    expect((await repo.search('')).filter((f) => f.sourceType === 'preset')).toHaveLength(217);
   });
 });

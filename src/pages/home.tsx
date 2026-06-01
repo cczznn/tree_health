@@ -4,7 +4,7 @@ import { getDailyStats, getMealRecords, getCurrentWorkoutPlan } from '../lib/api
 import { buildHomeDisplay, type HomeDisplayData } from '../lib/page-data'
 
 function HomePage() {
-  const [data, setData] = useState<HomeDisplayData>({ totalCalories: null, mealCount: null, mealSummary: '加载中', planSummary: '加载中', loading: true, error: null })
+  const [data, setData] = useState<HomeDisplayData>({ totalCalories: null, mealCount: null, totalProtein: null, mealSummary: '加载中', planSummary: '加载中', loading: true, error: null })
 
   useEffect(() => {
     const date = currentDate()
@@ -56,8 +56,8 @@ function HomePage() {
             <Text className='hero-card__unit'>记录数</Text>
           </View>
           <View>
-            <Text className='hero-card__value'>3.2L</Text>
-            <Text className='hero-card__unit'>饮水</Text>
+            <Text className='hero-card__value'>{data.totalProtein ?? '--'}g</Text>
+            <Text className='hero-card__unit'>蛋白质</Text>
           </View>
         </View>
       </View>

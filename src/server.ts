@@ -16,16 +16,19 @@ const PORT = parseInt(process.env.PORT || '3000', 10)
 
 async function main() {
   // Try MySQL if configured, skip silently if not available
+  let mysqlUserRepo: any = undefined
   try {
     const { runSeed } = await import('./db/seed')
     const timeout = new Promise<void>((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
     await Promise.race([runSeed(), timeout])
+    const { MysqlUserRepository } = await import('./auth/mysql-user-repository')
+    mysqlUserRepo = new MysqlUserRepository()
     console.log('Database initialized (MySQL)')
   } catch {
-    console.warn('Database init skipped (using in-memory storage)')
+    console.warn('MySQL seed skipped — user data will use in-memory fallback')
   }
 
-  beginNewAppContext()
+  beginNewAppContext(mysqlUserRepo)
 
   const app = express()
   app.use(express.json())

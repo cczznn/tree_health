@@ -79,7 +79,7 @@ export async function getMealRecords(date: string): Promise<MealRecordsResponse>
 export async function searchFoods(query = '') {
   return request<{
     data: Array<{
-      id: string; name: string
+      id: string; name: string; sourceType: string; userId: string | null
       caloriesPer100g: number; proteinPer100g: number; fatPer100g: number; carbsPer100g: number
       fiberPer100g: number | null; sugarPer100g: number | null; sodiumPer100g: number | null
     }>
@@ -108,6 +108,42 @@ export async function addBodyMetric(input: { weight: number; waist: number | nul
     method: 'POST',
     body: JSON.stringify(input),
   })
+}
+
+export async function addCustomFood(input: {
+  name: string
+  caloriesPer100g: number
+  proteinPer100g: number
+  fatPer100g: number
+  carbsPer100g: number
+  fiberPer100g?: number | null
+  sugarPer100g?: number | null
+  sodiumPer100g?: number | null
+}) {
+  return request<{ data: { id: string; name: string; caloriesPer100g: number; proteinPer100g: number; fatPer100g: number; carbsPer100g: number; fiberPer100g: number | null; sugarPer100g: number | null; sodiumPer100g: number | null } }>('/api/foods', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
+export async function updateCustomFood(id: string, input: {
+  name: string
+  caloriesPer100g: number
+  proteinPer100g: number
+  fatPer100g: number
+  carbsPer100g: number
+  fiberPer100g?: number | null
+  sugarPer100g?: number | null
+  sodiumPer100g?: number | null
+}) {
+  return request<{ data: { id: string; name: string; caloriesPer100g: number; proteinPer100g: number; fatPer100g: number; carbsPer100g: number; fiberPer100g: number | null; sugarPer100g: number | null; sodiumPer100g: number | null } }>(`/api/foods/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  })
+}
+
+export async function deleteCustomFood(id: string) {
+  return request<{ data: null }>(`/api/foods/${encodeURIComponent(id)}`, { method: 'DELETE' })
 }
 
 export async function addMealRecord(input: {

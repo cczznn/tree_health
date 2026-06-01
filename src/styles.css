@@ -263,3 +263,24 @@ taro-tabbar-item {
 .btn__text--primary {
   color: #fff;
 }
+
+.btn-action {
+  padding: 6PX 16PX;
+  border-radius: 8PX;
+  border: 2PX solid #07c160;
+  background: #fff;
+  font-size: 24rpx;
+  color: #07c160;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.btn-action--danger {
+  border-color: #e74c3c;
+  color: #e74c3c;
+}
+
+.btn-action--ghost {
+  border-color: #e5e7eb;
+  color: #6b7280;
+}

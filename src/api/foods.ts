@@ -45,6 +45,35 @@ export function createFoodRouter(): Router {
     }
   });
 
+  router.put('/:id', async (req: Request, res: Response) => {
+    try {
+      const userId = req.headers['x-user-id'] as string | undefined;
+      if (!userId) {
+        res.status(400).json({ error: { code: 'MISSING_USER_ID', message: '缺少 X-User-Id 请求头' } });
+        return;
+      }
+      const input = req.body as CreateCustomFoodInputDTO;
+      const food = await service.updateCustomFood(String(req.params.id), input, userId);
+      res.json({ data: food });
+    } catch (err) {
+      handleError(err, res);
+    }
+  });
+
+  router.delete('/:id', async (req: Request, res: Response) => {
+    try {
+      const userId = req.headers['x-user-id'] as string | undefined;
+      if (!userId) {
+        res.status(400).json({ error: { code: 'MISSING_USER_ID', message: '缺少 X-User-Id 请求头' } });
+        return;
+      }
+      await service.deleteCustomFood(String(req.params.id), userId);
+      res.json({ data: null });
+    } catch (err) {
+      handleError(err, res);
+    }
+  });
+
   return router;
 }
 

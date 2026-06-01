@@ -85,7 +85,7 @@
 - 定义基础仓储接口（内存版即可，后续可替换持久化）
 - 规定字段校验规则，如非负数值、必填字段、日期字段
 - 统一错误类型：`NotFound`、`ValidationError`、`ConflictError`
-- 为用户登录与用户隔离预留清晰的数据边界与查询约束
+- 为用户登录/注册（bcryptjs 密码哈希）、用户隔离、目标类型修改（`PUT /api/auth/goal`）预留清晰的数据边界与查询约束
 
 ### 验证步骤
 1. 为实体校验写失败测试（如负数体重、空食物名、缺少必填字段）
@@ -97,7 +97,7 @@
 - 使用独立 worktree `feature/t2-domain-repo`，并在最新 `master` 基线下重新创建
 - 先写 `tests/domain/validation.test.ts` 与 `tests/repositories/food-repository.test.ts`
 - 补齐 `src/domain/errors.ts`、`src/domain/types.ts`、`src/domain/validation.ts`、`src/foods/preset-foods.ts`、`src/repositories/index.ts`
-- 将预置食物数据精确补齐为 100 条，并完成用户隔离与仓储基础校验
+- 将预置食物数据精确补齐（初始 100 条，后扩充至 217 条），并完成用户隔离与仓储基础校验
 - 对应 commit hash：`2b67e5d`
 
 ### 依赖
@@ -108,7 +108,7 @@
 ## T3. 食物库与搜索 API
 
 ### 目标
-实现预置食物库、自定义食物共享搜索入口、关键词搜索和详情查看能力。T3 已在基于最新 `master` 重新创建的 `feature/t3-food-search` worktree 中完成；冷启动验证确认 T3 需要在 T1 → T2 完成后推进，数据库采用 MySQL，预置食物初始数据量为 100 条，单个用户最多可创建 50 个自定义食物。
+实现预置食物库、自定义食物共享搜索入口、关键词搜索和详情查看能力。T3 已在基于最新 `master` 重新创建的 `feature/t3-food-search` worktree 中完成；冷启动验证确认 T3 需要在 T1 → T2 完成后推进，数据库采用 MySQL，预置食物初始数据量为 217 条（含主食、肉类、水产、蔬菜、水果、坚果、饮料、零食、调味品等），单个用户最多可创建 50 个自定义食物。
 
 ### 涉及文件
 - `src/foods/**`
@@ -116,7 +116,7 @@
 - `tests/foods/**`
 
 ### 预期实现要点
-- 内置预置食物数据集（初始规模 100 条常见食物）
+- 内置预置食物数据集（初始规模 217 条常见食物，后续可扩充）
 - 支持按名称关键词搜索，预置食物与自定义食物共享同一接口
 - 搜索结果默认保持简洁，不强制显示来源
 - 支持根据 id 获取食物详情
@@ -229,10 +229,10 @@
 
 ---
 
-## T6. 自定义食物创建
+## T6. 自定义食物创建 / 编辑 / 删除
 
 ### 目标
-支持用户创建自定义食物并纳入搜索与记录流程。T6 已在独立 worktree `E:/6/ai/last-t6` 中完成，并根据用户确认的规则，采用“名称 + 热量 + 蛋白质/脂肪/碳水必填，纤维/糖/钠可选”的输入方式。
+支持用户创建、编辑、删除自定义食物并纳入搜索与记录流程。T6 已在独立 worktree `E:/6/ai/last-t6` 中完成基础创建功能，后续在会话中补充了编辑和删除能力（`PUT /api/foods/:id`、`DELETE /api/foods/:id`），采用”名称 + 热量 + 蛋白质/脂肪/碳水必填，纤维/糖/钠可选”的输入方式。
 
 ### 涉及文件
 - `src/foods/**`
@@ -459,7 +459,7 @@
 - 健身计划页：展示计划详情 + 周安排列表（每天的训练动作），打卡按钮 → 打卡表单 → 打卡历史
 - 运动打卡：集成在计划页，提交打卡后实时更新历史列表
 - 身体数据页：最新体重/围度展示 + 趋势计算（delta/direction）+ 历史列表 + 添加表单（体重必填，腰围/备注选填）
-- 我的 / 设置页：用户信息展示 + 目标设置（减脂/维持/增肌）可点击切换
+- 我的 / 设置页：用户信息展示 + 目标设置（减脂/维持/增肌）支持点击"修改"展开标签切换并保存，登录/注册内联表单，退出登录
 - 空状态、错误状态、加载状态：所有数据加载页面均覆盖
 
 ### 验证步骤
@@ -476,7 +476,7 @@
   - CSS 类和 `var()` 变量不可靠 → 全项目统一内联 style + 硬编码颜色
   - `fetch()` 在微信小程序中不存在 → mock 数据直接返回
 - 前端测试从 80 个增长到 119 个（新增 39 个），18 个测试文件全绿
-- 对应技术选型：Taro 4.2 + React 18 + TypeScript，编译目标 weapp
+- 对应技术选型：Taro 4.2 + React 18 + TypeScript，编译目标 H5（浏览器 Web 模式），支持微信小程序编译（`npm run build:weapp`）
 
 ### 依赖
 - T3、T4、T5、T7、T8、T9
@@ -502,13 +502,13 @@
 - `tests/lib/api.test.ts`、`tests/api/stats-api.test.ts`、`tests/api/meal-records-api.test.ts`（修改）
 
 ### 预期实现要点
-- 创建 Express Server 入口（`src/server.ts`），挂载 7 个 API 路由 + health check + serve H5 前端
+- 创建 Express Server 入口（`src/server.ts`），挂载 8 个 API 路由（auth/foods/meal-records/stats/workout-plans/workout-checkins/body-metrics/recommendations）+ health check + serve H5 前端，后续新增 `PUT /api/foods/:id`、`DELETE /api/foods/:id`、`PUT /api/auth/goal`
 - 补充缺失 API 路由：workout-checkins（GET/POST）、body-metrics（GET/POST）、recommendations（POST）
-- MySQL 数据库层：`mysql2` 连接池 + 8 张表 schema + 100 条预置食物 seed + docker-compose（MySQL 8.0）
+- MySQL 数据库层：`mysql2` 连接池 + 8 张表 schema + 217 条预置食物 seed + docker-compose（MySQL 8.0）
 - 前端 API 层改造：删除 mock 数据，H5 模式用 `fetch()` 调真实后端 API
 - 前后端数据格式对齐：stats API 返回扁平格式、meal-records API 空数据返回零值、body-metrics 无数据不抛错
 - 完整营养素记录：`FoodItem` 增加全部营养素字段，`computeMealNutrients()` 按份量计算，搜索结果/记录表单/本次添加/今日汇总全部展示完整营养素
-- 内存数据预置：100 条食物 + 默认健身计划，MySQL 不可用时自动回退内存模式
+- 内存数据预置：217 条食物 + 默认健身计划 + admin 账号（admin/admin123），MySQL 不可用时自动回退内存模式。MySQL 可用时所有业务表（users/foods/meal_records/daily_meal_summaries/workout_plans/workout_checkins/body_metrics）均通过 MySQL 仓库持久化。
 - Docker 多阶段构建 + CI（GitHub Actions：typecheck → test → docker build）
 - 端到端验证：server 启动 → API 返回数据 → 前端页面正常渲染 → 各页面交互可用
 

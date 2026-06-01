@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { View, Text, Input } from '@tarojs/components'
-import { getStoredUser, clearStoredUser, setStoredUser, type AuthUser } from '../lib/auth-store'
+import { getStoredUser, clearStoredUser, setStoredUser, getUserId, type AuthUser } from '../lib/auth-store'
 
 type GoalType = 'fat_loss' | 'maintain' | 'muscle_gain'
 const GOAL_LABELS: Record<GoalType, string> = { fat_loss: '减脂', maintain: '维持', muscle_gain: '增肌' }
@@ -14,6 +14,8 @@ function MePage() {
   const [password, setPassword] = useState('')
   const [goalType, setGoalType] = useState<GoalType>('maintain')
   const [error, setError] = useState('')
+  const [editingGoal, setEditingGoal] = useState(false)
+  const [newGoal, setNewGoal] = useState<GoalType>('maintain')
 
   useEffect(() => { setUser(getStoredUser()) }, [])
 
@@ -53,6 +55,29 @@ function MePage() {
   }
 
   const logout = () => { clearStoredUser(); setUser(null) }
+
+  const updateGoalType = () => {
+    fetch('/api/auth/goal', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': getUserId() },
+      body: JSON.stringify({ goalType: newGoal }),
+    })
+      .then(async (res) => {
+        const body = await res.json()
+        if (!res.ok) throw new Error(body.error?.message ?? '修改失败')
+        setStoredUser(body.data)
+        setUser(body.data)
+        setEditingGoal(false)
+        setError('')
+      })
+      .catch((err: Error) => setError(err.message))
+  }
+
+  const startEditGoal = () => {
+    setNewGoal((user?.goalType as GoalType) ?? 'maintain')
+    setEditingGoal(true)
+    setError('')
+  }
 
   // Login form
   if (showLogin) {
@@ -163,11 +188,36 @@ function MePage() {
         <Text className='page-subtitle'>账号、目标、设置</Text>
       </View>
       <View className='card'>
-        <Text className='card__title'>个人信息</Text>
-        <View style={{ marginTop: '12rpx' }}>
-          <Text className='card__text' style={{ marginBottom: '8rpx' }}>用户名：{user.name}</Text>
-          <Text className='card__text'>目标类型：{GOAL_LABELS[user.goalType as GoalType] ?? '维持'}</Text>
-        </View>
+        <Text className='card__title' style={{ marginBottom: '12rpx' }}>个人信息</Text>
+        <Text className='card__text' style={{ marginBottom: '8rpx' }}>用户名：{user.name}</Text>
+        {!editingGoal ? (
+          <View className='food-item' style={{ padding: '8rpx 0' }}>
+            <Text className='card__text'>目标类型：{GOAL_LABELS[user.goalType as GoalType] ?? '维持'}</Text>
+            <Text className='card__action' onClick={startEditGoal}>修改</Text>
+          </View>
+        ) : (
+          <View style={{ marginTop: '8rpx' }}>
+            <View className='tag-row' style={{ marginBottom: '12rpx' }}>
+              {GOAL_TYPES.map((t) => {
+                const active = newGoal === t
+                return (
+                  <View key={t} className={`meal-type-tag ${active ? 'meal-type-tag--active' : ''}`} onClick={() => setNewGoal(t)}>
+                    <Text className={active ? 'meal-type-tag__text--active' : 'meal-type-tag__text'}>{GOAL_LABELS[t]}</Text>
+                  </View>
+                )
+              })}
+            </View>
+            {error && <Text style={{ color: '#e74c3c', display: 'block', fontSize: '24rpx', marginBottom: '8rpx' }}>{error}</Text>}
+            <View style={{ display: 'flex' }}>
+              <View style={{ flex: 1, padding: '14rpx', borderRadius: '12rpx', textAlign: 'center', background: '#f5f7fb', border: '2rpx solid #e5e7eb', marginRight: '12rpx' }} onClick={() => { setEditingGoal(false); setError('') }}>
+                <Text style={{ fontSize: '26rpx', color: '#1f2937' }}>取消</Text>
+              </View>
+              <View style={{ flex: 1, padding: '14rpx', borderRadius: '12rpx', textAlign: 'center', background: '#07c160' }} onClick={updateGoalType}>
+                <Text style={{ fontSize: '26rpx', color: '#ffffff' }}>保存目标</Text>
+              </View>
+            </View>
+          </View>
+        )}
       </View>
       <View className='card'>
         <Text className='card__title'>关于</Text>

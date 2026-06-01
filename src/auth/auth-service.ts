@@ -13,7 +13,9 @@ export interface UserRow {
 
 export interface IUserRepository {
   findByName(name: string): Promise<UserRow | null>
+  findById(id: string): Promise<UserRow | null>
   create(user: UserRow): Promise<void>
+  update(id: string, user: UserRow): Promise<UserRow>
 }
 
 export class AuthService {
@@ -49,5 +51,17 @@ export class AuthService {
     if (!valid) throw new AppError('AUTH_FAILED', 401, '用户名或密码错误')
 
     return { id: user.id, name: user.name, goalType: user.goal_type }
+  }
+
+  async updateGoalType(userId: string, goalType: GoalType) {
+    const validTypes: GoalType[] = ['fat_loss', 'muscle_gain', 'maintain']
+    if (!validTypes.includes(goalType)) throw new ValidationError('无效的目标类型')
+
+    const user = await this.userRepo.findById(userId)
+    if (!user) throw new AppError('USER_NOT_FOUND', 404, '用户不存在')
+
+    const updated = { ...user, goal_type: goalType }
+    await this.userRepo.update(userId, updated)
+    return { id: updated.id, name: updated.name, goalType: updated.goal_type }
   }
 }

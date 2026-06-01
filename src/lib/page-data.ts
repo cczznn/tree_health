@@ -3,6 +3,7 @@ import type { DailyStatsResponse, MealRecordsResponse, WorkoutPlanResponse } fro
 export interface HomeDisplayData {
   totalCalories: number | null
   mealCount: number | null
+  totalProtein: number | null
   mealSummary: string
   planSummary: string
   loading: boolean
@@ -17,14 +18,14 @@ export function buildHomeDisplay(
 ): HomeDisplayData {
   if (error) {
     return {
-      totalCalories: null, mealCount: null,
+      totalCalories: null, mealCount: null, totalProtein: null,
       mealSummary: '加载失败', planSummary: '加载失败',
       loading: false, error,
     }
   }
   if (!stats || !meals || !plan) {
     return {
-      totalCalories: null, mealCount: null,
+      totalCalories: null, mealCount: null, totalProtein: null,
       mealSummary: '加载中', planSummary: '加载中',
       loading: true, error: null,
     }
@@ -32,6 +33,7 @@ export function buildHomeDisplay(
   return {
     totalCalories: stats.totalCalories,
     mealCount: stats.mealCount,
+    totalProtein: stats.totalProtein,
     mealSummary: `已记录 ${meals.data.length} 条，今日总能量 ${meals.summary.totalCalories} kcal`,
     planSummary: `${plan.data.title} · ${plan.data.frequencyPerWeek} 次/周 · ${plan.data.durationMinutes} 分钟/次`,
     loading: false,
