@@ -45,6 +45,7 @@ const showSuccess = (msg: string) => { setSuccessMsg(msg); setTimeout(() => setS
   const [showCheckin, setShowCheckin] = useState(false)
   const [showFullWeek, setShowFullWeek] = useState(false)
   const [showActivityLevel, setShowActivityLevel] = useState(false)
+  const [selActivity, setSelActivity] = useState('moderate')
   const [showQuestionnaire, setShowQuestionnaire] = useState(false)
   const [note, setNote] = useState('')
   const [qForm, setQForm] = useState({
@@ -183,27 +184,41 @@ const showSuccess = (msg: string) => { setSuccessMsg(msg); setTimeout(() => setS
       {/* Activity level */}
       {showActivityLevel && (
         <View className='card'>
-          <Text className='card__title' style={{ marginBottom: '12rpx' }}>选择活动量</Text>
-          <View className='tag-row' style={{ marginBottom: '16rpx' }}>
-            {[
-              {k:'sedentary',v:'久坐不动'},
-              {k:'light',v:'轻度活动'},
-              {k:'moderate',v:'中度活动'},
-              {k:'active',v:'高度活动'},
-              {k:'athlete',v:'运动员'},
-            ].map((o, i) => {
-              const sel = true // all selectable, just pick one
-              return (
-                <View key={o.k} className='meal-type-tag'
-                  onClick={() => { setShowActivityLevel(false); handleGenerate('diet', { activityLevel: o.k }) }}
-                >
-                  <Text className='meal-type-tag__text'>{o.v}</Text>
+          <Text className='card__title' style={{ marginBottom: '16rpx' }}>选择活动量</Text>
+          {[
+            {k:'sedentary',v:'久坐不动',d:'几乎不运动，办公室工作',f:'1.2'},
+            {k:'light',v:'轻度活动',d:'每周运动 1-2 天',f:'1.375'},
+            {k:'moderate',v:'中度活动',d:'每周运动 3-5 天',f:'1.55'},
+            {k:'active',v:'高度活动',d:'每周运动 6-7 天',f:'1.725'},
+            {k:'athlete',v:'运动员',d:'每天高强度训练或体力劳动',f:'1.9'},
+          ].map((o) => {
+            const active = selActivity === o.k
+            return (
+              <View key={o.k}
+                style={{
+                  padding: '14rpx 16rpx', borderRadius: '12rpx', marginBottom: '8rpx',
+                  border: active ? '2px solid #07c160' : '1px solid #e5e7eb',
+                  background: active ? '#e8f8ef' : '#fff',
+                }}
+                onClick={() => setSelActivity(o.k)}
+              >
+                <View style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={{ fontSize: '26rpx', fontWeight: '500', color: active ? '#07c160' : '#1a1a2e' }}>{o.v}</Text>
+                  <Text style={{ fontSize: '22rpx', color: '#8e8ea0' }}>×{o.f}</Text>
                 </View>
-              )
-            })}
-          </View>
-          <View style={{ textAlign: 'center' }} onClick={() => setShowActivityLevel(false)}>
-            <Text className='card__action'>取消</Text>
+                <Text style={{ fontSize: '22rpx', color: '#8e8ea0', marginTop: '4rpx' }}>{o.d}</Text>
+              </View>
+            )
+          })}
+          <View style={{ display: 'flex', gap: '8px', marginTop: '8rpx' }}>
+            <View style={{ flex: 1, padding: '16rpx', borderRadius: '12rpx', textAlign: 'center', background: '#f5f7fb', border: '2rpx solid #e5e7eb' }} onClick={() => setShowActivityLevel(false)}>
+              <Text style={{ fontSize: '26rpx', color: '#1f2937' }}>取消</Text>
+            </View>
+            <View style={{ flex: 1, padding: '16rpx', borderRadius: '12rpx', textAlign: 'center', background: '#07c160' }}
+              onClick={() => { setShowActivityLevel(false); handleGenerate('diet', { activityLevel: selActivity }) }}
+            >
+              <Text style={{ fontSize: '26rpx', color: '#ffffff' }}>开始生成</Text>
+            </View>
           </View>
         </View>
       )}
