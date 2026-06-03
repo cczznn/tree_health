@@ -9,6 +9,7 @@ export function createWorkoutPlansRouter(): Router {
 
   router.get('/current', async (req: Request, res: Response) => {
     try {
+      if (!req.headers['x-user-id']) { res.status(400).json({ error: { code: 'MISSING_USER_ID', message: '缺少 X-User-Id' } }); return }
       const ctx = getAppContext();
 
       // Try to return the most recent stored plan first
@@ -31,8 +32,9 @@ export function createWorkoutPlansRouter(): Router {
     }
   });
 
-  router.get('/diet-current', async (_req: Request, res: Response) => {
+  router.get('/diet-current', async (req: Request, res: Response) => {
     try {
+      if (!req.headers['x-user-id']) { res.status(400).json({ error: { code: 'MISSING_USER_ID', message: '缺少 X-User-Id' } }); return }
       const ctx = getAppContext()
       const all = await ctx.dietPlanRepo.findAll()
       const latest = all.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] || null
