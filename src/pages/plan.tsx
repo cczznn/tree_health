@@ -44,6 +44,7 @@ const showSuccess = (msg: string) => { setSuccessMsg(msg); setTimeout(() => setS
 
   const [showCheckin, setShowCheckin] = useState(false)
   const [showFullWeek, setShowFullWeek] = useState(false)
+  const [showActivityLevel, setShowActivityLevel] = useState(false)
   const [showQuestionnaire, setShowQuestionnaire] = useState(false)
   const [note, setNote] = useState('')
   const [qForm, setQForm] = useState({
@@ -159,7 +160,7 @@ const showSuccess = (msg: string) => { setSuccessMsg(msg); setTimeout(() => setS
         </View>
         <View
           style={{ flex: 1, padding: '10px', borderRadius: '8px', textAlign: 'center', background: '#07c160' }}
-          onClick={() => handleGenerate('diet')}
+          onClick={() => setShowActivityLevel(true)}
         >
           <Text style={{ fontSize: '26rpx', color: '#ffffff', fontWeight: '500' }}>
             {generating === 'diet' ? '生成中...' : '生成饮食计划'}
@@ -176,6 +177,34 @@ const showSuccess = (msg: string) => { setSuccessMsg(msg); setTimeout(() => setS
       {successMsg && (
         <View className='card' style={{ background: '#e8f8ef', border: '1px solid #d4f0df', textAlign: 'center' }}>
           <Text style={{ color: '#07c160', fontSize: '24rpx', fontWeight: '500' }}>{successMsg}</Text>
+        </View>
+      )}
+
+      {/* Activity level */}
+      {showActivityLevel && (
+        <View className='card'>
+          <Text className='card__title' style={{ marginBottom: '12rpx' }}>选择活动量</Text>
+          <View className='tag-row' style={{ marginBottom: '16rpx' }}>
+            {[
+              {k:'sedentary',v:'久坐不动'},
+              {k:'light',v:'轻度活动'},
+              {k:'moderate',v:'中度活动'},
+              {k:'active',v:'高度活动'},
+              {k:'athlete',v:'运动员'},
+            ].map((o, i) => {
+              const sel = true // all selectable, just pick one
+              return (
+                <View key={o.k} className='meal-type-tag'
+                  onClick={() => { setShowActivityLevel(false); handleGenerate('diet', { activityLevel: o.k }) }}
+                >
+                  <Text className='meal-type-tag__text'>{o.v}</Text>
+                </View>
+              )
+            })}
+          </View>
+          <View style={{ textAlign: 'center' }} onClick={() => setShowActivityLevel(false)}>
+            <Text className='card__action'>取消</Text>
+          </View>
         </View>
       )}
 

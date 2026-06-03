@@ -92,13 +92,16 @@ export async function generateTraining(input: AiPlanInput, q?: TrainingQuestionn
 }
 
 // ── Generate diet plan only ──
-export async function generateDiet(input: AiPlanInput): Promise<string> {
-  // Pre-calculate BMR-based calorie target as a reference for the AI
-  const { calcDailyTarget } = await import('./calorie-calc')
+export async function generateDiet(input: AiPlanInput, activityLevel?: string): Promise<string> {
+  const { calcDailyTarget, getActivityFactor } = await import('./calorie-calc')
+  const al = (activityLevel || 'sedentary') as any
+  const factor = getActivityFactor(al)
+  const alLabel = ({sedentary:'久坐不动',light:'轻度活动(每周1-2天)',moderate:'中度活动(每周3-5天)',active:'高度活动(每周6-7天)',athlete:'运动员(每天高强度)'} as any)[al] || '久坐不动'
+
   let calorieRef = ''
   try {
-    const target = calcDailyTarget({ weightKg: input.weightKg, heightCm: input.heightCm, age: input.age, gender: input.gender, goalType: input.goalType })
-    calorieRef = `\n参考热量目标：${target.target} kcal（BMR: ${target.bmr}, TDEE: ${target.tdee}）\n请将 dailyCalories 设置为接近此参考值。`
+    const target = calcDailyTarget({ weightKg: input.weightKg, heightCm: input.heightCm, age: input.age, gender: input.gender, goalType: input.goalType, activityLevel: al })
+    calorieRef = `\n活动量：${alLabel}（系数 ${factor}）\n参考热量目标：${target.target} kcal（BMR: ${target.bmr}, TDEE: ${target.tdee}）\n请将 dailyCalories 设置为接近此参考值，并根据活动量调整蛋白质和碳水比例。`
   } catch { /* ignore */ }
 
   return callAi(

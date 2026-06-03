@@ -243,11 +243,11 @@ export class WorkoutPlanService {
     return { plan, dietAdvice: { dailyCalories: 2000, principles: [], mealSuggestions: [] } }
   }
 
-  async generateDietOnly(input: AiPlanInput): Promise<AiGeneratedPlan> {
+  async generateDietOnly(input: AiPlanInput, activityLevel?: string): Promise<AiGeneratedPlan> {
     if (!getDeepSeekKey()) return this.fallbackPlan(input)
 
     let content = ''
-    try { content = await generateDiet(input) } catch { return this.fallbackPlan(input) }
+    try { content = await generateDiet(input, activityLevel) } catch { return this.fallbackPlan(input) }
     if (!content?.trim()) return this.fallbackPlan(input)
 
     let json = content.trim()

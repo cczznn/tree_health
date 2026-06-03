@@ -96,7 +96,7 @@ export function createWorkoutPlansRouter(): Router {
         result.plan.userId = userId
         try { await ctx.workoutPlanRepo.create(result.plan) } catch (e: any) { console.error('DB write error (workout_plans):', e.message) }
       } else if (genType === 'diet') {
-        result = await service.generateDietOnly(input);
+        result = await service.generateDietOnly(input, req.body?.activityLevel);
         const dietPlan = {
           id: result.plan.id,
           userId,
