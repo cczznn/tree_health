@@ -109,13 +109,13 @@ export async function getCurrentDietPlan(): Promise<{ data: any }> {
 
 export async function getBodyMetrics() {
   return request<{
-    data: Array<{ id: string; metricDate: string; weight: number; waist: number | null; note: string | null }>
+    data: Array<{ id: string; metricDate: string; weight: number; height: number | null; waist: number | null; chest: number | null; hip: number | null; note: string | null }>
     trend: unknown
   }>(`/api/body-metrics`)
 }
 
 export async function addBodyMetric(input: { weight: number; height: number | null; waist: number | null; chest: number | null; hip: number | null; note: string }) {
-  return request<{ data: { id: string; metricDate: string; weight: number; waist: number | null; note: string | null } }>('/api/body-metrics', {
+  return request<{ data: { id: string; metricDate: string; weight: number; height: number | null; waist: number | null; chest: number | null; hip: number | null; note: string | null } }>('/api/body-metrics', {
     method: 'POST',
     body: JSON.stringify(input),
   })

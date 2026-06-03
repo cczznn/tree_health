@@ -83,14 +83,16 @@ describe('WorkoutCheckinService', () => {
     ).rejects.toThrow(NotFoundError);
   });
 
-  it('其他用户不能查看别人的打卡记录', async () => {
+  it('计划作为共享模板，不同用户的打卡记录按 userId 隔离', async () => {
     await service.createCheckin({
       userId: 'user-1',
       planId,
       date: '2026-05-25',
-      note: '私有打卡',
+      note: '用户1打卡',
     });
 
-    await expect(service.getCheckinsByPlanAndDate('user-2', planId, '2026-05-25')).rejects.toThrow(NotFoundError);
+    // user-2 queries the same plan but gets only their own checkins (empty)
+    const user2Records = await service.getCheckinsByPlanAndDate('user-2', planId, '2026-05-25');
+    expect(user2Records).toHaveLength(0);
   });
 });

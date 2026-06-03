@@ -55,6 +55,8 @@ export function beginNewAppContext(userRepoOverride?: MysqlUserRepository): AppC
       name: 'admin',
       password_hash: '$2b$10$IY1DyWzK//FAvXn1xCLGgeVyCbQhUAw5/5cZNDPh3ts5n66nSuJYK',
       goal_type: 'maintain',
+      age: null,
+      gender: null,
       created_at: new Date().toISOString(),
     })
 
@@ -83,5 +85,5 @@ export function beginNewAppContext(userRepoOverride?: MysqlUserRepository): AppC
 
 export function getAppContext(): AppContext {
   if (!currentContext) beginNewAppContext()
-  return currentContext
+  return currentContext!
 }
