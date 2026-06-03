@@ -24,5 +24,9 @@ export default defineConfig<Partial<UserConfigExport>>(() => ({
     devServer: { port: 10086 },
     publicPath: '/',
     router: { mode: 'hash' },
+    webpackChain(chain) {
+      chain.output.filename('js/[name].[contenthash:8].js')
+      chain.output.chunkFilename('chunk/[name].[contenthash:8].js')
+    },
   },
 }))
