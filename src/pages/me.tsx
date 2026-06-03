@@ -16,7 +16,21 @@ function MePage() {
   const [goalType, setGoalType] = useState<GoalType>('maintain')
   const [error, setError] = useState('')
 
-  useEffect(() => { setUser(getStoredUser()) }, [])
+  useEffect(() => {
+    const stored = getStoredUser()
+    if (stored) setUser(stored)
+    // Also fetch latest profile from API
+    fetch('/api/auth/profile', {
+      method: 'GET',
+      headers: { 'x-user-id': stored?.id || '' },
+    }).then(async (res) => {
+      if (res.ok) {
+        const body = await res.json()
+        setStoredUser(body.data)
+        setUser(body.data)
+      }
+    }).catch(() => {})
+  }, [])
 
   const handleLogin = () => {
     if (!name || !password) { setError('请输入用户名和密码'); return }

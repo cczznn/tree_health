@@ -61,6 +61,12 @@ export class AuthService {
     return { id: user.id, name: user.name, goalType: user.goal_type, age: user.age, gender: user.gender, weight: user.weight, height: user.height }
   }
 
+  async getProfile(userId: string) {
+    const user = await this.userRepo.findById(userId)
+    if (!user) throw new AppError('USER_NOT_FOUND', 404, '用户不存在')
+    return { id: user.id, name: user.name, goalType: user.goal_type, age: user.age, gender: user.gender, weight: user.weight, height: user.height }
+  }
+
   async updateGoalType(userId: string, goalType: GoalType) {
     const validTypes: GoalType[] = ['fat_loss', 'muscle_gain', 'maintain']
     if (!validTypes.includes(goalType)) throw new ValidationError('无效的目标类型')

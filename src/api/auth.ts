@@ -42,6 +42,15 @@ export function createAuthRouter(userRepo: { findByName(name: string): Promise<U
     }
   })
 
+  router.get('/profile', async (req: Request, res: Response) => {
+    try {
+      const userId = req.headers['x-user-id'] as string | undefined
+      if (!userId) { res.status(400).json({ error: { code: 'MISSING_USER_ID', message: '缺少 X-User-Id' } }); return }
+      const user = await service.getProfile(userId)
+      res.json({ data: user })
+    } catch (err) { handleError(err, res) }
+  })
+
   router.put('/profile', async (req: Request, res: Response) => {
     try {
       const userId = req.headers['x-user-id'] as string | undefined
