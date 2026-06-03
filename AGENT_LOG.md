@@ -1014,4 +1014,23 @@
   - React `useEffect` 对数组状态的二次计算很容易产生"设置→覆盖"的竞态，直接在一次异步回调中完成所有状态更新更安全
   - MySQL JSON 列配合 `mysql2` 时需注意返回值是字符串还是已解析对象，做好兼容判断
   - 共享模板（plan）不应校验 `userId` 归属，避免 multi-tenant 场景下 404
-  - 渐进式展示（汇总 → 详情）在不加页面跳转的前提下增加信息密度
+
+### 64. 活动量选择 + 饮食计划热量公式联动
+
+- **时间戳**：2026-06-03
+- **任务编号**：T10（扩展）
+- **阶段**：功能增强
+- **触发技能**：`brainstorming`
+- **关键上下文**：热量计算一直用固定活动系数（久坐 1.2），需要让用户选择活动量来影响 TDEE 计算，同时传递给 AI 调整饮食计划。
+- **动作**：
+  - `calorie-calc.ts`：新增 `ActivityLevel` 类型、`ACTIVITY_OPTIONS` 常量表和 `getActivityFactor()` 函数，`calcTDEE()` 和 `calcDailyTarget()` 接受 `activityLevel` 参数
+  - `ai-client.ts`：`generateDiet()` 接受 `activityLevel`，计算参考热量并附带活动量标签（如"中度活动（每周3-5天），系数1.55"）传给 AI prompt
+  - `workout-plan-service.ts`：`generateDietOnly()` 接受 `activityLevel` 透传
+  - `api/workout-plans.ts`：从 `req.body.activityLevel` 读取活动量
+  - 计划页：点击"生成饮食计划"→ 弹出 5 级活动量卡片（久坐不动/轻度/中度/高度/运动员），每项显示系数和说明，选中后点"开始生成"
+- **结果**：
+  - 用户可选择活动量（默认 moderate），TDEE 按系数调整（1.2 → 1.9）
+  - AI 收到活动量信息后相应调整蛋白质和碳水比例
+- **学到的教训**：
+  - 活动量级别的天数描述要避免重叠（light 1-2、moderate 3-5）
+  - 选择 + 确认按钮的 UX 比点击即触发更好，避免误触

@@ -427,7 +427,8 @@
   - 训练强度（温和/中等/高强度）
 - Prompt 包含：用户性别、年龄、体重、身高、目标 + 7 题问卷答案
 - AI 输出：`{ title, frequencyPerWeek, durationMinutes, weeklySchedule }`
-- 饮食计划生成不受影响，继续使用身体数据 + 公式热量参考
+- **饮食计划活动量选择（新增）**：生成饮食计划前弹出 5 级活动量卡片（久坐不动/轻度/中度/高度/运动员），选中后点击"开始生成"触发 AI，活动系数影响 TDEE 计算（1.2~1.9）
+- 饮食计划生成使用身体数据 + 活动量 × Mifflin-St Jeor 公式热量参考 + AI prompt 调整
 - JSON 解析失败重试一次，再次失败回退到规则模板
 - AI 生成的 plan 存入 workout_plans 表，`generated_by = 'ai'`
 - 数据不足时（缺性别/年龄/体重/身高）返回提示，不调用 AI
