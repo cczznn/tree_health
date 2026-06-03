@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { View, Text, Input } from '@tarojs/components'
 import { getCurrentWorkoutPlan, getCurrentDietPlan, getWorkoutCheckins, addWorkoutCheckin, generateAiPlan, type WorkoutPlanResponse } from '../lib/api'
-import { requireLogin } from '../lib/auth-store'
+import { requireLogin, isLoggedIn } from '../lib/auth-store'
 
 interface DietAdvice {
   dailyCalories: number
@@ -130,6 +130,18 @@ const showSuccess = (msg: string) => { setSuccessMsg(msg); setTimeout(() => setS
         setNote('')
       })
       .catch(() => setAiError('打卡失败，请重试'))
+  }
+
+  if (!isLoggedIn()) {
+    return (
+      <View className='page'>
+        <View className='page-header'>
+          <Text className='page-title'>计划</Text>
+          <Text className='page-subtitle'>请先登录</Text>
+        </View>
+        <View className='card'><Text className='card__text'>请前往"我的"页面登录后查看</Text></View>
+      </View>
+    )
   }
 
   if (loading) {

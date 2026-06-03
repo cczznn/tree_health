@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { View, Text } from '@tarojs/components'
 import { getDailyStats, getMealRecords, getCurrentWorkoutPlan, getCurrentDietPlan, type WorkoutPlanResponse } from '../lib/api'
 import { buildHomeDisplay, type HomeDisplayData } from '../lib/page-data'
-import { getUserId } from '../lib/auth-store'
+import { getUserId, isLoggedIn } from '../lib/auth-store'
 
 interface CalorieTarget {
   ready: boolean
@@ -50,6 +50,20 @@ function HomePage() {
       .then((res) => { if (res.data?.content) setDietAdvice(res.data.content) })
       .catch(() => {})
   }, [])
+
+  if (!isLoggedIn()) {
+    return (
+      <View className='page'>
+        <View className='page-header'>
+          <Text className='page-title'>今天</Text>
+          <Text className='page-subtitle'>请先登录</Text>
+        </View>
+        <View className='card'>
+          <Text className='card__text'>请前往"我的"页面登录或注册账号</Text>
+        </View>
+      </View>
+    )
+  }
 
   if (data.loading && data.totalCalories === null) {
     return (

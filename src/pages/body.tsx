@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { View, Text, Input } from '@tarojs/components'
 import { getBodyMetrics, addBodyMetric } from '../lib/api'
 import { validateBodyForm, computeTrend, type BodyMetricEntry } from '../lib/body-data'
-import { requireLogin } from '../lib/auth-store'
+import { requireLogin, isLoggedIn } from '../lib/auth-store'
 
 function BodyPage() {
   const [metrics, setMetrics] = useState<BodyMetricEntry[]>([])
@@ -72,7 +72,9 @@ function BodyPage() {
         <Text className='page-subtitle'>体重、围度、趋势</Text>
       </View>
 
-      {loading ? (
+      {!isLoggedIn() ? (
+        <View className='card'><Text className='card__text'>请前往"我的"页面登录后查看</Text></View>
+      ) : loading ? (
         <View className='card'><Text className='card__text'>加载中...</Text></View>
       ) : (
         <>
