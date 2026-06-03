@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from 'express'
 import { AppError, ValidationError } from '../domain/errors'
 import { BodyMetricService, type CreateBodyMetricInput } from '../body-metrics/body-metric-service'
+import { AuthService } from '../auth/auth-service'
 import { getAppContext } from '../app-context'
 
 export function createBodyMetricsRouter(): Router {
@@ -45,21 +46,10 @@ export function createBodyMetricsRouter(): Router {
         note: req.body.note ?? null,
       }
       const result = await service.createMetric(input)
-      // Auto-sync weight/height to user profile
-      try {
-        const ctx = getAppContext()
-        const updated = await ctx.userRepo.update(userId, {
-          ...(await ctx.userRepo.findById(userId))!,
-          weight: result.weight,
-          height: result.height || (await ctx.userRepo.findById(userId))!.height,
-        })
-        res.status(201).json({
-          data: result,
-          profileUpdated: true,
-        })
-      } catch {
-        res.status(201).json({ data: result })
-      }
+      res.status(201).json({ data: result })
+      // Auto-sync weight/height to user profile (best-effort)
+      const authService = new AuthService(getAppContext().userRepo as any)
+      authService.updateProfile(userId, { weight: result.weight, height: result.height || null }).catch(() => {})
     } catch (err) {
       handleError(err, res)
     }
