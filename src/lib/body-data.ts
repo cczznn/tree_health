@@ -27,10 +27,10 @@ export function validateBodyForm(input: Partial<BodyFormInput>): string[] {
   } else if (!Number.isFinite(input.weight)) {
     errors.push('体重必须为数字')
   }
-  if (input.height !== undefined && input.height !== null) {
-    if (input.height <= 0 || input.height > 250) {
-      errors.push('身高需在 0-250 cm 之间')
-    }
+  if (input.height === undefined || input.height === null) {
+    errors.push('请输入身高')
+  } else if (input.height <= 0 || input.height > 250) {
+    errors.push('身高需在 0-250 cm 之间')
   }
   if (input.waist !== undefined && input.waist !== null) {
     if (input.waist <= 0 || input.waist > 300) {

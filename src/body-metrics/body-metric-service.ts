@@ -8,7 +8,7 @@ export interface CreateBodyMetricInput {
   userId: string;
   metricDate: string;
   weight: number;
-  height: number | null;
+  height: number;
   waist: number | null;
   chest: number | null;
   hip: number | null;

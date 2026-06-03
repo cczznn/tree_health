@@ -149,7 +149,7 @@ function BodyPage() {
           </View>
 
           <View style={{ marginBottom: '16rpx' }}>
-            <Text style={{ fontSize: '24rpx', color: '#6b7280', marginBottom: '8rpx', display: 'block' }}>身高 cm（选填，自动填入上次记录）</Text>
+            <Text style={{ fontSize: '24rpx', color: '#6b7280', marginBottom: '8rpx', display: 'block' }}>身高 (cm) *</Text>
             <Input className='search-input' type='digit' placeholder='如 172' value={height} onInput={(e) => setHeight(e.detail.value)} />
           </View>
 
