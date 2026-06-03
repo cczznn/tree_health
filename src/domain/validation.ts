@@ -17,7 +17,9 @@ export function validateBodyMetric(data: Omit<BodyMetric, 'id'>): void {
   if (!data.userId) throw new ValidationError('用户ID不能为空');
   if (!data.metricDate) throw new ValidationError('记录日期不能为空');
   if (data.weight <= 0) throw new ValidationError('体重必须大于0');
+  if (data.height !== null && data.height <= 0) throw new ValidationError('身高必须大于0');
   if (data.waist !== null && data.waist <= 0) throw new ValidationError('腰围必须大于0');
+  if (data.chest !== null && data.chest <= 0) throw new ValidationError('胸围必须大于0');
   if (data.hip !== null && data.hip <= 0) throw new ValidationError('臀围必须大于0');
   if (data.thigh !== null && data.thigh <= 0) throw new ValidationError('大腿围必须大于0');
 }

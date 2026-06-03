@@ -12,7 +12,7 @@ import { createBodyMetricsRouter } from './api/body-metrics'
 import { createRecommendationsRouter } from './api/recommendations'
 import { createAuthRouter } from './api/auth'
 
-const PORT = parseInt(process.env.PORT || '3000', 10)
+const PORT = parseInt(process.env.PORT || '3000', 10) || 3000
 
 async function main() {
   // Try MySQL if configured, skip silently if not available
@@ -40,6 +40,42 @@ async function main() {
   // Health check
   app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() })
+  })
+
+  // Calorie target
+  app.get('/api/calorie-target', async (req, res) => {
+    try {
+      const userId = req.headers['x-user-id'] as string | undefined
+      if (!userId) { res.status(400).json({ error: { code: 'MISSING_USER_ID', message: '缺少 X-User-Id' } }); return }
+
+      const { calcDailyTarget } = await import('./lib/calorie-calc')
+      const ctx = getAppContext()
+
+      const user = await ctx.userRepo.findById(userId)
+      if (!user) { res.status(404).json({ error: { code: 'NOT_FOUND', message: '用户不存在' } }); return }
+      if (!user.age || !user.gender) {
+        res.json({ data: { ready: false, message: '请先在"我的"页面设置性别和年龄' } })
+        return
+      }
+
+      const metrics = await ctx.bodyMetricRepo.findByUser(userId)
+      const latest = metrics.sort((a: any, b: any) => b.metricDate.localeCompare(a.metricDate))[0]
+      if (!latest || !latest.weight || !latest.height) {
+        res.json({ data: { ready: false, message: '请先在"身体"页面录入体重和身高' } })
+        return
+      }
+
+      const result = calcDailyTarget({
+        weightKg: latest.weight,
+        heightCm: latest.height,
+        age: user.age,
+        gender: user.gender,
+        goalType: user.goal_type as any,
+      })
+      res.json({ data: { ready: true, ...result } })
+    } catch (err: any) {
+      res.status(500).json({ error: { code: 'ERROR', message: err.message } })
+    }
   })
 
   // Serve H5 frontend static files first

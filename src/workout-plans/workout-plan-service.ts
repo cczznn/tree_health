@@ -1,9 +1,65 @@
 import { randomUUID } from 'node:crypto';
 import type { GoalType, WorkoutPlan } from '../domain/types';
+import { generateAiPlan, generateTraining, generateDiet, type AiPlanInput, type TrainingQuestionnaire } from '../lib/ai-client';
+import { getDeepSeekKey } from '../lib/ai-config';
+import { PRESET_FOODS } from '../foods/preset-foods';
+
+interface MacroItem { name: string; grams: number; calories: number; protein: number; fat: number; carbs: number }
+
+function enrichWithMacros(item: { name: string; grams: number; calories: number }): MacroItem {
+  const result: MacroItem = { name: item.name, grams: item.grams, calories: item.calories, protein: 0, fat: 0, carbs: 0 }
+  if (item.grams <= 0) return result
+
+  // Try to match food in preset database
+  const q = item.name.toLowerCase()
+  const match = PRESET_FOODS.find(f => f.name.toLowerCase().includes(q) || q.includes(f.name.toLowerCase()))
+  if (match) {
+    const factor = item.grams / 100
+    result.protein = Math.round(match.proteinPer100g * factor * 10) / 10
+    result.fat = Math.round(match.fatPer100g * factor * 10) / 10
+    result.carbs = Math.round(match.carbsPer100g * factor * 10) / 10
+    return result
+  }
+
+  // Fallback: estimate from calories (rough split)
+  const remaining = item.calories
+  result.protein = Math.round(remaining * 0.25 / 4 * 10) / 10
+  result.fat = Math.round(remaining * 0.25 / 9 * 10) / 10
+  result.carbs = Math.round(remaining * 0.5 / 4 * 10) / 10
+  return result
+}
+
+function calcTotalMacros(meals: Array<{ items: MacroItem[] }>): { protein: number; fat: number; carbs: number } {
+  let protein = 0, fat = 0, carbs = 0
+  for (const meal of meals) {
+    for (const item of meal.items) {
+      protein += item.protein
+      fat += item.fat
+      carbs += item.carbs
+    }
+  }
+  return {
+    protein: Math.round(protein * 10) / 10,
+    fat: Math.round(fat * 10) / 10,
+    carbs: Math.round(carbs * 10) / 10,
+  }
+}
 
 export interface GenerateWorkoutPlanInput {
   goalType?: GoalType;
   frequencyPerWeek?: number;
+}
+
+export interface AiGeneratedPlan {
+  plan: WorkoutPlan
+  dietAdvice: {
+    dailyCalories: number
+    principles: string[]
+    mealSuggestions: Array<{
+      meal: string
+      items: Array<{ name: string; grams: number; calories: number }>
+    }>
+  }
 }
 
 export interface ScheduleDay {
@@ -69,6 +125,179 @@ const TEMPLATES: Record<GoalType, { title: string; summary: string; baseFocuses:
 const DAY_LABELS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
 
 export class WorkoutPlanService {
+  async generateAiPlan(input: AiPlanInput): Promise<AiGeneratedPlan> {
+    if (!getDeepSeekKey()) {
+      return this.fallbackPlan(input)
+    }
+
+    let content = ''
+    try {
+      content = await generateAiPlan(input)
+    } catch {
+      return this.fallbackPlan(input)
+    }
+
+    if (!content || content.trim() === '') {
+      return this.fallbackPlan(input)
+    }
+
+    // Strip markdown code blocks if present
+    let json = content.trim()
+    if (json.startsWith('```')) {
+      json = json.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '')
+    }
+
+    let parsed: any
+    try {
+      parsed = JSON.parse(json)
+    } catch {
+      // Retry once
+      try {
+        const retryContent = await generateAiPlan(input)
+        let retryJson = retryContent.trim()
+        if (retryJson.startsWith('```')) {
+          retryJson = retryJson.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '')
+        }
+        parsed = JSON.parse(retryJson)
+      } catch {
+        return this.fallbackPlan(input)
+      }
+    }
+
+    const schedule = Array.isArray(parsed.weeklySchedule) ? parsed.weeklySchedule.map((d: any) => ({
+      dayLabel: String(d.dayLabel || ''),
+      focus: String(d.focus || ''),
+      durationMinutes: Number(d.durationMinutes) || 45,
+      exercises: Array.isArray(d.exercises) ? d.exercises.map(String) : [],
+    })) : []
+
+    const rawMeals = Array.isArray(parsed.dietAdvice?.mealSuggestions)
+      ? parsed.dietAdvice.mealSuggestions.map((m: any) => ({
+          meal: String(m.meal || ''),
+          items: Array.isArray(m.items) ? m.items.map((i: any) => ({
+            name: String(i.name || ''),
+            grams: Number(i.grams) || 0,
+            calories: Number(i.calories) || 0,
+          })) : [],
+        }))
+      : []
+
+    const mealSuggestions = rawMeals.map((meal: any) => ({
+      ...meal,
+      items: meal.items.map((item: any) => enrichWithMacros(item)),
+    }))
+    const totalMacros = calcTotalMacros(mealSuggestions)
+
+    const dietAdvice = {
+      dailyCalories: Number(parsed.dietAdvice?.dailyCalories) || 2000,
+      macros: totalMacros,
+      principles: Array.isArray(parsed.dietAdvice?.principles) ? parsed.dietAdvice.principles.map(String) : [],
+      mealSuggestions,
+    }
+
+    const plan: WorkoutPlan = {
+      id: randomUUID(),
+      userId: 'system',
+      createdAt: new Date().toISOString(),
+      title: String(parsed.title || 'AI 定制计划'),
+      goalType: input.goalType,
+      frequencyPerWeek: Number(parsed.frequencyPerWeek) || 4,
+      durationMinutes: Number(parsed.durationMinutes) || 45,
+      planContent: {
+        generatedBy: 'ai',
+        weeklySchedule: schedule,
+        dietAdvice,
+      },
+    }
+
+    return { plan, dietAdvice }
+  }
+
+  async generateTrainingOnly(input: AiPlanInput, questionnaire?: TrainingQuestionnaire): Promise<AiGeneratedPlan> {
+    if (!getDeepSeekKey()) return this.fallbackPlan(input)
+
+    let content = ''
+    try { content = await generateTraining(input, questionnaire) } catch { return this.fallbackPlan(input) }
+    if (!content?.trim()) return this.fallbackPlan(input)
+
+    let json = content.trim()
+    if (json.startsWith('```')) json = json.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '')
+
+    let parsed: any
+    try { parsed = JSON.parse(json) } catch { return this.fallbackPlan(input) }
+
+    const schedule = Array.isArray(parsed.weeklySchedule) ? parsed.weeklySchedule.map((d: any) => ({
+      dayLabel: String(d.dayLabel || ''), focus: String(d.focus || ''),
+      durationMinutes: Number(d.durationMinutes) || 45,
+      exercises: Array.isArray(d.exercises) ? d.exercises.map(String) : [],
+    })) : []
+
+    const plan: WorkoutPlan = {
+      id: randomUUID(), userId: 'system', createdAt: new Date().toISOString(),
+      title: String(parsed.title || 'AI 训练计划'),
+      goalType: input.goalType,
+      frequencyPerWeek: Number(parsed.frequencyPerWeek) || 4,
+      durationMinutes: Number(parsed.durationMinutes) || 45,
+      planContent: { generatedBy: 'ai', weeklySchedule: schedule },
+    }
+    return { plan, dietAdvice: { dailyCalories: 2000, principles: [], mealSuggestions: [] } }
+  }
+
+  async generateDietOnly(input: AiPlanInput): Promise<AiGeneratedPlan> {
+    if (!getDeepSeekKey()) return this.fallbackPlan(input)
+
+    let content = ''
+    try { content = await generateDiet(input) } catch { return this.fallbackPlan(input) }
+    if (!content?.trim()) return this.fallbackPlan(input)
+
+    let json = content.trim()
+    if (json.startsWith('```')) json = json.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '')
+
+    let parsed: any
+    try { parsed = JSON.parse(json) } catch { return this.fallbackPlan(input) }
+
+    const da = parsed.dietAdvice || {}
+    const mealSuggestions = Array.isArray(da.mealSuggestions) ? da.mealSuggestions.map((m: any) => ({
+      meal: String(m.meal || ''),
+      items: Array.isArray(m.items) ? m.items.map((i: any) => ({
+        name: String(i.name || ''), grams: Number(i.grams) || 0, calories: Number(i.calories) || 0,
+      })) : [],
+    })) : []
+
+    // Enrich with macros from our food database
+    const enrichedMeals = mealSuggestions.map((meal: any) => ({
+      ...meal,
+      items: meal.items.map((item: any) => enrichWithMacros(item)),
+    }))
+    const totalMacros = calcTotalMacros(enrichedMeals)
+
+    const dietAdvice = {
+      dailyCalories: Number(da.dailyCalories) || 2000,
+      principles: Array.isArray(da.principles) ? da.principles.map(String) : [],
+      macros: totalMacros,
+      mealSuggestions: enrichedMeals,
+    }
+
+    const plan: WorkoutPlan = {
+      id: randomUUID(), userId: 'system', createdAt: new Date().toISOString(),
+      title: 'AI 饮食计划', goalType: input.goalType, frequencyPerWeek: 3, durationMinutes: 30,
+      planContent: { generatedBy: 'ai', weeklySchedule: [], dietAdvice },
+    }
+    return { plan, dietAdvice }
+  }
+
+  private fallbackPlan(input: AiPlanInput): AiGeneratedPlan {
+    const base = this.generatePlan({ goalType: input.goalType })
+    return {
+      plan: base,
+      dietAdvice: {
+        dailyCalories: 2000,
+        principles: ['保持均衡饮食', '多摄入蛋白质和蔬菜'],
+        mealSuggestions: [],
+      },
+    }
+  }
+
   generatePlan(input: GenerateWorkoutPlanInput): WorkoutPlan {
     const goalType = input.goalType;
     const frequencyPerWeek = input.frequencyPerWeek;

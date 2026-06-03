@@ -96,6 +96,17 @@ export async function getCurrentWorkoutPlan(
   )
 }
 
+export async function generateAiPlan(type: 'training' | 'diet' | 'both' = 'both', extra?: any) {
+  return request<{ data: { plan: WorkoutPlanResponse['data']; dietAdvice: any } }>('/api/workout-plans/generate-ai', {
+    method: 'POST',
+    body: JSON.stringify({ type, ...(extra || {}) }),
+  })
+}
+
+export async function getCurrentDietPlan(): Promise<{ data: any }> {
+  return request<{ data: any }>('/api/workout-plans/diet-current')
+}
+
 export async function getBodyMetrics() {
   return request<{
     data: Array<{ id: string; metricDate: string; weight: number; waist: number | null; note: string | null }>
@@ -103,7 +114,7 @@ export async function getBodyMetrics() {
   }>(`/api/body-metrics`)
 }
 
-export async function addBodyMetric(input: { weight: number; waist: number | null; note: string }) {
+export async function addBodyMetric(input: { weight: number; height: number | null; waist: number | null; chest: number | null; hip: number | null; note: string }) {
   return request<{ data: { id: string; metricDate: string; weight: number; waist: number | null; note: string | null } }>('/api/body-metrics', {
     method: 'POST',
     body: JSON.stringify(input),
@@ -156,15 +167,15 @@ export async function addMealRecord(input: {
 }
 
 export async function getWorkoutCheckins() {
-  return request<{ data: Array<{ id: string; planId: string; date: string; note: string | null }> }>(
+  return request<{ data: Array<{ id: string; planId: string; date: string; note: string | null; completedExercises?: string[] }> }>(
     `/api/workout-checkins`,
   )
 }
 
-export async function addWorkoutCheckin(note: string) {
-  return request<{ data: { id: string; planId: string; date: string; note: string | null } }>('/api/workout-checkins', {
+export async function addWorkoutCheckin(note: string, exerciseName?: string) {
+  return request<{ data: { id: string; planId: string; date: string; note: string | null; completedExercises: string[] } }>('/api/workout-checkins', {
     method: 'POST',
-    body: JSON.stringify({ planId: 'wp-1', date: today(), note }),
+    body: JSON.stringify({ planId: 'wp-1', date: today(), note, exerciseName }),
   })
 }
 

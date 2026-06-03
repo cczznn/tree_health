@@ -33,7 +33,17 @@ export function createBodyMetricsRouter(): Router {
         res.status(400).json({ error: { code: 'MISSING_USER_ID', message: '缺少 X-User-Id 请求头' } })
         return
       }
-      const input: CreateBodyMetricInput = { metricDate: today(), ...req.body, userId }
+      const input: CreateBodyMetricInput = {
+        metricDate: today(),
+        userId,
+        weight: req.body.weight,
+        height: req.body.height ?? null,
+        waist: req.body.waist ?? null,
+        chest: req.body.chest ?? null,
+        hip: req.body.hip ?? null,
+        thigh: req.body.thigh ?? null,
+        note: req.body.note ?? null,
+      }
       const result = await service.createMetric(input)
       res.status(201).json({ data: result })
     } catch (err) {

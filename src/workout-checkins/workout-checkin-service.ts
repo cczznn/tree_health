@@ -8,6 +8,8 @@ export interface CreateWorkoutCheckinInput {
   planId: string;
   date: string;
   note: string;
+  exerciseIndex?: number;
+  exerciseName?: string;
 }
 
 export class WorkoutCheckinService {
@@ -18,16 +20,31 @@ export class WorkoutCheckinService {
 
   async createCheckin(input: CreateWorkoutCheckinInput): Promise<WorkoutCheckin> {
     this.validateInput(input);
-    // Verify plan exists (plans are shared templates, not user-owned)
     await this.planRepo.getById(input.planId);
 
+    if (input.exerciseName !== undefined) {
+      // Per-exercise toggle: find existing check-in for today, toggle the exercise
+      const existing = await this.checkinRepo.findByUserPlanAndDate(input.userId, input.planId, input.date)
+      const today = existing[0]
+      if (today) {
+        const completed = [...(today.completedExercises || [])]
+        const idx = completed.indexOf(input.exerciseName)
+        if (idx >= 0) completed.splice(idx, 1); else completed.push(input.exerciseName)
+        const updated = { ...today, completedExercises: completed, status: 'completed' as const }
+        await this.checkinRepo.update(today.id, updated)
+        return updated
+      }
+    }
+
+    // New check-in for the day
     const checkin: WorkoutCheckin = {
       id: randomUUID(),
       userId: input.userId,
       planId: input.planId,
       date: input.date,
       status: 'completed',
-      note: input.note,
+      note: input.note || null,
+      completedExercises: input.exerciseName ? [input.exerciseName] : [],
       createdAt: new Date().toISOString(),
     };
 
@@ -40,11 +57,8 @@ export class WorkoutCheckinService {
     if (!planId) throw new ValidationError('计划ID不能为空');
     if (!date) throw new ValidationError('日期不能为空');
 
-    const plan = await this.planRepo.getById(planId);
-    if (plan.userId !== userId) {
-      throw new NotFoundError('WorkoutPlan', planId);
-    }
-
+    // Plans are shared templates, not user-owned; skip ownership check
+    await this.planRepo.getById(planId);
     return this.checkinRepo.findByUserPlanAndDate(userId, planId, date);
   }
 

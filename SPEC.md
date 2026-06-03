@@ -236,25 +236,65 @@
 
 #### 输入
 - 目标（减脂/增肌/维持）
-- 训练频率
-- 单次时长
-- 训练偏好（可选）
+- 训练频率（规则模板手动指定，AI 模式由问卷决定）
+- 单次时长（规则模板手动指定，AI 模式由问卷决定）
+- **AI 模式**：用户身体数据（体重、身高、年龄、性别），从系统自动采集
+- **AI 问卷（新增）**：生成训练计划前弹出，收集以下偏好：
+
+| # | 问题 | 选项 |
+|---|------|------|
+| 1 | 一周练几天？ | 1–7 天 |
+| 2 | 一次练多久？ | 15/30/45/60/90 分钟 |
+| 3 | 想主要练哪些部位？ | 多选：胸/背/肩/手臂/腿/核心/全身 |
+| 4 | 训练经验水平？ | 新手 / 有一定基础 / 进阶 |
+| 5 | 训练场所？ | 居家 / 健身房 / 都可以 |
+| 6 | 可用器械？ | 多选：无器械/哑铃/杠铃/弹力带/综合器械 |
+| 7 | 能接受的动作强度？ | 温和 / 中等 / 高强度 |
 
 #### 行为
-- 系统生成基础训练计划模板
+- 系统支持两种计划生成方式：
+  - **规则模板**：根据目标 + 频率生成预置模板（现有方式，作为 AI 回退）
+  - **AI 生成**：调用 DeepSeek API，输入身体数据 + 目标 + 问卷答案，返回结构化训练计划
 - 用户查看每周训练安排
-- 用户对完成的训练进行打卡
+- **分条目打卡（新增）**：每个训练动作可独立勾选完成/取消，勾选后显示绿色 ✓ + 文字删除线，持久化到 workout_checkins 表的 `completed_exercises` JSON 字段，刷新不丢失
+- 用户点击"生成训练计划"→ 弹出 7 题问卷 → 提交后调用 AI 生成
 
 #### 输出
-- 训练计划列表
+- 训练计划列表（含每天的训练动作）
+- 饮食建议（每日热量目标、饮食原则、三餐建议含克重和热量）
 - 打卡状态
 - 完成率统计
 
+#### AI 输出格式
+```json
+{
+  "title": "计划名称",
+  "frequencyPerWeek": 4,
+  "durationMinutes": 45,
+  "weeklySchedule": [
+    { "dayLabel": "周一", "focus": "训练重点", "durationMinutes": 45,
+      "exercises": ["动作名 组数×次数"] }
+  ],
+  "dietAdvice": {
+    "dailyCalories": 1800,
+    "principles": ["原则1"],
+    "mealSuggestions": [
+      { "meal": "早餐", "items": [
+        { "name": "食物名", "grams": 50, "calories": 184 }
+      ]}
+    ]
+  }
+}
+```
+
 #### 边界条件
-- 用户信息不足时使用默认计划模板
+- 用户信息不足时（缺性别/年龄/体重/身高）提示先完善信息，不可触发 AI 生成
+- AI 生成的食物名尽量与系统预置食物库匹配
 - 同一训练项可重复打卡，但需要按日期区分
 
 #### 错误处理
+- AI API 不可用时回退到规则模板计划
+- AI 返回 JSON 解析失败时重试一次，再失败使用规则模板
 - 计划生成失败时展示默认新手计划
 
 ---
@@ -346,7 +386,10 @@
 #### User
 - id
 - name
+- password_hash
 - goalType（减脂/增肌/维持）
+- age（可选，用于AI热量计算）
+- gender（可选，male/female，用于AI热量计算）
 - createdAt
 
 #### Food
@@ -390,6 +433,14 @@
 - planContent
 - createdAt
 
+#### DietPlan（独立实体，与 WorkoutPlan 分开存储）
+- id
+- userId
+- title
+- goalType
+- content（JSON：dailyCalories、principles、mealSuggestions）
+- createdAt
+
 #### WorkoutCheckin
 - id
 - userId
@@ -403,10 +454,12 @@
 - userId
 - metricDate
 - weight
-- waist
-- hip
-- thigh
-- note
+- height（可选，自动填入上次记录）
+- waist（可选）
+- chest（可选）
+- hip（可选）
+- thigh（可选）
+- note（可选）
 
 #### Recommendation
 - id
@@ -455,8 +508,10 @@
 - `GET /stats/trend?range=`：获取趋势统计
 
 ### 7.4 健身计划
-- `POST /workout-plans/generate`：生成基础计划
-- `GET /workout-plans/:id`：查看计划详情
+- `POST /workout-plans/generate`：生成基础计划（规则模板）
+- `POST /workout-plans/generate-ai`：**AI 生成**（调用 DeepSeek，body `{ type: 'training' | 'diet' | 'both' }`）
+- `GET /workout-plans/current`：获取当前训练计划
+- `GET /workout-plans/diet-current`：获取当前饮食计划
 - `POST /workout-checkins`：提交打卡
 
 ### 7.5 身体数据
@@ -486,12 +541,15 @@
 - **理由**：与前端同语言栈，适合快速开发 API 与 AI 推荐逻辑
 
 ### 8.3 数据库
-- **建议**：MySQL
-- **理由**：当前冷启动验证已确认采用 MySQL，便于后续保持与线上部署一致的数据库行为；如需本地轻量开发，可在不改变数据模型的前提下切换到 SQLite 作为替代方案
+- **建议**：MySQL 8.0 + mysql2
+- **表**：users / foods / meal_records / daily_meal_summaries / workout_plans / diet_plans / workout_checkins / body_metrics / recommendations（共 9 张）
+- **理由**：MySQL 持久化所有数据，不可用时自动回退内存模式（开发/测试友好）
 
 ### 8.4 AI 推荐实现
-- **建议**：结构化规则 + LLM 生成结合
-- **理由**：既能满足“AI 推荐”要求，也能通过规则降低不稳定性
+- **LLM 方案**：DeepSeek API（deepseek-chat），OpenAI SDK 兼容调用
+- **回退机制**：API key 未配置或调用失败时回退到规则模板
+- **输出**：训练计划（JSON）和饮食计划（JSON）分开生成，独立存储
+- **模块**：训练计划和饮食计划拆分为 WorkoutPlan 和 DietPlan 两个独立实体
 
 ### 8.5 设计风格
 - **风格**：微信小程序风格

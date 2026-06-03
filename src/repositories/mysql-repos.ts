@@ -240,11 +240,21 @@ export class MysqlWorkoutCheckinRepository {
   async create(checkin: WorkoutCheckin): Promise<WorkoutCheckin> {
     const pool = getPool()
     await pool.execute(
-      `INSERT INTO workout_checkins (id, user_id, plan_id, checkin_date, note, created_at)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [checkin.id, checkin.userId, checkin.planId, checkin.date, checkin.note, toMysqlDatetime(checkin.createdAt)],
+      `INSERT INTO workout_checkins (id, user_id, plan_id, checkin_date, note, completed_exercises, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [checkin.id, checkin.userId, checkin.planId, checkin.date, checkin.note, JSON.stringify(checkin.completedExercises || []), toMysqlDatetime(checkin.createdAt)],
     )
     return checkin
+  }
+
+  async update(id: string, data: Partial<WorkoutCheckin>): Promise<WorkoutCheckin> {
+    const pool = getPool()
+    await pool.execute(
+      'UPDATE workout_checkins SET completed_exercises = ?, note = ? WHERE id = ?',
+      [JSON.stringify(data.completedExercises || []), data.note || null, id],
+    )
+    const [rows] = await pool.execute('SELECT * FROM workout_checkins WHERE id = ?', [id]) as any
+    return rowToCheckin(rows[0])
   }
 
   async findAll(filter?: Partial<WorkoutCheckin>): Promise<WorkoutCheckin[]> {
@@ -258,10 +268,18 @@ export class MysqlWorkoutCheckinRepository {
 }
 
 function rowToCheckin(r: any): WorkoutCheckin {
+  let dateStr = ''
+  const d = r.checkin_date
+  if (d instanceof Date) {
+    dateStr = d.toISOString().slice(0, 10)
+  } else if (typeof d === 'string') {
+    dateStr = d.slice(0, 10)
+  }
   return {
     id: r.id, userId: r.user_id, planId: r.plan_id,
-    date: String(r.checkin_date).slice(0, 10),
+    date: dateStr,
     status: 'completed' as const, note: r.note,
+    completedExercises: typeof r.completed_exercises === 'string' ? JSON.parse(r.completed_exercises) : (r.completed_exercises || []),
     createdAt: r.created_at,
   }
 }
@@ -289,9 +307,9 @@ export class MysqlBodyMetricRepository {
   async create(metric: BodyMetric): Promise<BodyMetric> {
     const pool = getPool()
     await pool.execute(
-      `INSERT INTO body_metrics (id, user_id, metric_date, weight, waist, hip, thigh, note)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [metric.id, metric.userId, metric.metricDate, metric.weight, metric.waist, metric.hip, metric.thigh, metric.note],
+      `INSERT INTO body_metrics (id, user_id, metric_date, weight, height, waist, chest, hip, thigh, note)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [metric.id, metric.userId, metric.metricDate, metric.weight, metric.height, metric.waist, metric.chest, metric.hip, metric.thigh, metric.note],
     )
     return metric
   }
@@ -301,8 +319,33 @@ function rowToMetric(r: any): BodyMetric {
   return {
     id: r.id, userId: r.user_id,
     metricDate: String(r.metric_date).slice(0, 10),
-    weight: Number(r.weight), waist: r.waist !== null ? Number(r.waist) : null,
+    weight: Number(r.weight), height: r.height !== null ? Number(r.height) : null,
+    waist: r.waist !== null ? Number(r.waist) : null, chest: r.chest !== null ? Number(r.chest) : null,
     hip: r.hip !== null ? Number(r.hip) : null, thigh: r.thigh !== null ? Number(r.thigh) : null,
     note: r.note,
+  }
+}
+
+// ── DietPlan ──
+import type { DietPlan } from '../domain/types'
+
+export class MysqlDietPlanRepository {
+  async findAll(): Promise<DietPlan[]> {
+    const pool = getPool()
+    const [rows] = await pool.execute('SELECT * FROM diet_plans ORDER BY created_at DESC') as any
+    return rows.map((r: any) => ({
+      id: r.id, userId: r.user_id, title: r.title, goalType: r.goal_type,
+      content: typeof r.content === 'string' ? JSON.parse(r.content) : r.content,
+      createdAt: r.created_at,
+    }))
+  }
+
+  async create(plan: DietPlan): Promise<DietPlan> {
+    const pool = getPool()
+    await pool.execute(
+      'INSERT INTO diet_plans (id, user_id, title, goal_type, content) VALUES (?, ?, ?, ?, ?)',
+      [plan.id, plan.userId, plan.title, plan.goalType, JSON.stringify(plan.content)],
+    )
+    return plan
   }
 }

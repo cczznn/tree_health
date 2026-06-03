@@ -8,7 +8,9 @@ export interface CreateBodyMetricInput {
   userId: string;
   metricDate: string;
   weight: number;
+  height: number | null;
   waist: number | null;
+  chest: number | null;
   hip: number | null;
   thigh: number | null;
   note: string | null;
@@ -34,7 +36,9 @@ export class BodyMetricService {
       userId: input.userId,
       metricDate: input.metricDate,
       weight: input.weight,
+      height: input.height,
       waist: input.waist,
+      chest: input.chest,
       hip: input.hip,
       thigh: input.thigh,
       note: input.note,
@@ -44,7 +48,9 @@ export class BodyMetricService {
       userId: input.userId,
       metricDate: input.metricDate,
       weight: input.weight,
+      height: input.height,
       waist: input.waist,
+      chest: input.chest,
       hip: input.hip,
       thigh: input.thigh,
       note: input.note,

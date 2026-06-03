@@ -117,6 +117,12 @@ export class WorkoutCheckinRepository extends InMemoryRepository<WorkoutCheckin>
   }
 }
 
+import type { DietPlan } from '../domain/types';
+
+export class DietPlanRepository extends InMemoryRepository<DietPlan> {
+  constructor() { super('DietPlan') }
+}
+
 export class BodyMetricRepository extends InMemoryRepository<BodyMetric> {
   async findByUser(userId: string): Promise<BodyMetric[]> {
     return Array.from(this.store.values()).filter((metric) => metric.userId === userId);

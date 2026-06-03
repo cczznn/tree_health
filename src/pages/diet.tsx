@@ -31,9 +31,29 @@ function DietPage() {
   const [customSugar, setCustomSugar] = useState('')
   const [customSodium, setCustomSodium] = useState('')
   const [customFormErrors, setCustomFormErrors] = useState<string[]>([])
+  const [viewDate, setViewDate] = useState(currentDate)
+
+  const loadDate = (date: string) => {
+    setViewDate(date)
+    setLoadError(null)
+    getMealRecords(date)
+      .then((records) => {
+        setApiMeals({
+          count: records.summary.mealCount,
+          calories: records.summary.totalCalories,
+          protein: records.summary.totalProtein,
+          fat: records.summary.totalFat,
+          carbs: records.summary.totalCarbs,
+          fiber: records.summary.totalFiber,
+        })
+        setMealRecords(records.data)
+      })
+      .catch((err: Error) => setLoadError(err.message))
+  }
 
   useEffect(() => {
     const date = currentDate()
+    setViewDate(date)
     Promise.all([getMealRecords(date), searchFoods('')])
       .then(([records, foods]) => {
         setApiMeals({
@@ -95,10 +115,10 @@ function DietPage() {
       mealType,
       amount: parseFloat(amount),
       unit: '份',
-      recordDate: currentDate(),
+      recordDate: viewDate,
       note: null,
     })
-      .then(() => getMealRecords(currentDate()))
+      .then(() => getMealRecords(viewDate))
       .then((records) => {
         setApiMeals({
           count: records.summary.mealCount,
@@ -184,7 +204,7 @@ function DietPage() {
   }
 
   const foodActionButtons = (food: FoodItem) => (
-    <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '12rpx' }}>
+    <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '6px' }}>
       <View className='btn-action' onClick={() => selectFood(food)}>
         <Text>+ 记录</Text>
       </View>
@@ -208,7 +228,7 @@ function DietPage() {
           <Text style={{ fontSize: '22rpx', color: '#6b7280', marginBottom: '4rpx', display: 'block' }}>名称 *</Text>
           <Input className='search-input' type='text' value={customName} onInput={(e) => setCustomName(e.detail.value)} />
         </View>
-        <View style={{ display: 'flex', gap: '8rpx', marginBottom: '10rpx' }}>
+        <View style={{ display: 'flex', gap: '4px', marginBottom: '10rpx' }}>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: '22rpx', color: '#6b7280', marginBottom: '4rpx', display: 'block' }}>热量(kcal) *</Text>
             <Input className='search-input' type='digit' value={customCalories} onInput={(e) => setCustomCalories(e.detail.value)} />
@@ -218,7 +238,7 @@ function DietPage() {
             <Input className='search-input' type='digit' value={customProtein} onInput={(e) => setCustomProtein(e.detail.value)} />
           </View>
         </View>
-        <View style={{ display: 'flex', gap: '8rpx', marginBottom: '10rpx' }}>
+        <View style={{ display: 'flex', gap: '4px', marginBottom: '10rpx' }}>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: '22rpx', color: '#6b7280', marginBottom: '4rpx', display: 'block' }}>脂肪(g) *</Text>
             <Input className='search-input' type='digit' value={customFat} onInput={(e) => setCustomFat(e.detail.value)} />
@@ -228,7 +248,7 @@ function DietPage() {
             <Input className='search-input' type='digit' value={customCarbs} onInput={(e) => setCustomCarbs(e.detail.value)} />
           </View>
         </View>
-        <View style={{ display: 'flex', gap: '8rpx', marginBottom: '10rpx' }}>
+        <View style={{ display: 'flex', gap: '4px', marginBottom: '10rpx' }}>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: '22rpx', color: '#6b7280', marginBottom: '4rpx', display: 'block' }}>纤维(g)</Text>
             <Input className='search-input' type='digit' value={customFiber} onInput={(e) => setCustomFiber(e.detail.value)} />
@@ -247,7 +267,7 @@ function DietPage() {
             {customFormErrors.map((err, i) => <Text key={i} style={{ color: '#e74c3c', display: 'block', fontSize: '22rpx' }}>{err}</Text>)}
           </View>
         )}
-        <View style={{ display: 'flex', gap: '16rpx' }}>
+        <View style={{ display: 'flex', gap: '8px' }}>
           <View style={{ flex: 1, padding: '16rpx', borderRadius: '12rpx', textAlign: 'center', background: '#f5f7fb', border: '2rpx solid #e5e7eb' }} onClick={clearCustomForm}>
             <Text style={{ fontSize: '24rpx', color: '#1f2937' }}>取消</Text>
           </View>
@@ -266,10 +286,37 @@ function DietPage() {
         <Text className='page-subtitle'>搜索、记录、汇总</Text>
       </View>
 
-      <View className='card' onClick={() => setShowRecords(!showRecords)}>
+      <View className='card'>
         <View className='card__header'>
-          <Text className='card__title'>今日记录</Text>
-          <Text className='card__action'>{showRecords ? '收起 ▲' : '展开 ▼'}</Text>
+          <Text className='card__title'>{viewDate === currentDate() ? '今日记录' : viewDate}</Text>
+          <View style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <View style={{ display: 'flex', alignItems: 'center', borderRadius: '10rpx', border: '2rpx solid #e5e7eb', overflow: 'hidden' }}>
+              <View style={{ padding: '6rpx 16rpx', background: '#f5f7fb' }} onClick={() => loadDate(shiftDate(viewDate, -1))}>
+                <Text style={{ fontSize: '28rpx', color: '#6b7280' }}>‹</Text>
+              </View>
+              <input
+                type='date'
+                value={viewDate}
+                max={currentDate()}
+                onChange={(e: any) => loadDate(e.target.value)}
+                style={{
+                  width: '130px', textAlign: 'center', fontSize: '14px',
+                  padding: '5px 6px', border: 'none', background: '#fff',
+                  fontFamily: 'inherit', color: '#1f2937', outline: 'none',
+                }}
+              />
+              <View style={{ padding: '6rpx 16rpx', background: '#07c160' }} onClick={() => loadDate(shiftDate(viewDate, 1))}>
+                <Text style={{ fontSize: '28rpx', color: '#ffffff' }}>›</Text>
+              </View>
+            </View>
+            <View
+              style={{ padding: '6rpx 16rpx', borderRadius: '10rpx', border: '2rpx solid #07c160' }}
+              onClick={() => loadDate(currentDate())}
+            >
+              <Text className='card__action' style={{ fontWeight: '600', color: '#07c160' }}>回到今天</Text>
+            </View>
+            <Text className='card__action' onClick={() => setShowRecords(!showRecords)}>{showRecords ? '收起 ▲' : '展开 ▼'}</Text>
+          </View>
         </View>
         <Text className='card__text'>{displayData.recordSummary}</Text>
         {showRecords && (
@@ -412,7 +459,7 @@ function DietPage() {
                 <Text style={{ fontSize: '24rpx', color: '#6b7280', marginBottom: '8rpx', display: 'block' }}>名称 *</Text>
                 <Input className='search-input' type='text' placeholder='如：牛油果' value={customName} onInput={(e) => setCustomName(e.detail.value)} />
               </View>
-              <View style={{ display: 'flex', gap: '12rpx', marginBottom: '12rpx' }}>
+              <View style={{ display: 'flex', gap: '6px', marginBottom: '12rpx' }}>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: '24rpx', color: '#6b7280', marginBottom: '8rpx', display: 'block' }}>热量(kcal) *</Text>
                   <Input className='search-input' type='digit' placeholder='每100g' value={customCalories} onInput={(e) => setCustomCalories(e.detail.value)} />
@@ -422,7 +469,7 @@ function DietPage() {
                   <Input className='search-input' type='digit' placeholder='每100g' value={customProtein} onInput={(e) => setCustomProtein(e.detail.value)} />
                 </View>
               </View>
-              <View style={{ display: 'flex', gap: '12rpx', marginBottom: '12rpx' }}>
+              <View style={{ display: 'flex', gap: '6px', marginBottom: '12rpx' }}>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: '24rpx', color: '#6b7280', marginBottom: '8rpx', display: 'block' }}>脂肪(g) *</Text>
                   <Input className='search-input' type='digit' placeholder='每100g' value={customFat} onInput={(e) => setCustomFat(e.detail.value)} />
@@ -432,7 +479,7 @@ function DietPage() {
                   <Input className='search-input' type='digit' placeholder='每100g' value={customCarbs} onInput={(e) => setCustomCarbs(e.detail.value)} />
                 </View>
               </View>
-              <View style={{ display: 'flex', gap: '12rpx', marginBottom: '12rpx' }}>
+              <View style={{ display: 'flex', gap: '6px', marginBottom: '12rpx' }}>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: '24rpx', color: '#6b7280', marginBottom: '8rpx', display: 'block' }}>纤维(g)</Text>
                   <Input className='search-input' type='digit' placeholder='可选' value={customFiber} onInput={(e) => setCustomFiber(e.detail.value)} />
@@ -498,4 +545,10 @@ export default DietPage
 
 function currentDate() {
   return new Date().toISOString().slice(0, 10)
+}
+
+function shiftDate(date: string, days: number): string {
+  const d = new Date(date)
+  d.setDate(d.getDate() + days)
+  return d.toISOString().slice(0, 10)
 }

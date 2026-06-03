@@ -1,5 +1,5 @@
 export default defineAppConfig({
-  pages: ['pages/home', 'pages/diet', 'pages/plan', 'pages/body', 'pages/me'],
+  pages: ['pages/home', 'pages/diet', 'pages/plan', 'pages/body', 'pages/me', 'pages/edit-profile'],
   window: {
     backgroundTextStyle: 'light',
     navigationBarBackgroundColor: '#ffffff',

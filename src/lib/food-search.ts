@@ -52,7 +52,7 @@ export function groupFoodsByLetter(foods: FoodItem[]): { letter: string; foods: 
 }
 
 export function computeMealNutrients(food: FoodItem, amount: number) {
-  const factor = amount
+  const factor = amount / 100
   const round = (v: number) => Math.round(v * factor * 10) / 10
   return {
     calories: Math.round(food.caloriesPer100g * factor),

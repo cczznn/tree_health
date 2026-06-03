@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS users (
   name VARCHAR(100) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
   goal_type ENUM('fat_loss', 'muscle_gain', 'maintain') NOT NULL DEFAULT 'maintain',
+  age INT DEFAULT NULL,
+  gender ENUM('male', 'female') DEFAULT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -88,11 +90,23 @@ CREATE TABLE IF NOT EXISTS body_metrics (
   user_id VARCHAR(36) NOT NULL,
   metric_date DATE NOT NULL,
   weight DECIMAL(5,2) NOT NULL,
+  height DECIMAL(6,2) DEFAULT NULL,
   waist DECIMAL(5,2) DEFAULT NULL,
+  chest DECIMAL(5,2) DEFAULT NULL,
   hip DECIMAL(5,2) DEFAULT NULL,
   thigh DECIMAL(5,2) DEFAULT NULL,
   note TEXT DEFAULT NULL,
   INDEX idx_metrics_user_date (user_id, metric_date)
+);
+
+CREATE TABLE IF NOT EXISTS diet_plans (
+  id VARCHAR(36) PRIMARY KEY,
+  user_id VARCHAR(36) NOT NULL,
+  title VARCHAR(200) NOT NULL,
+  goal_type ENUM('fat_loss', 'muscle_gain', 'maintain') NOT NULL,
+  content JSON NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_diet_plans_user (user_id)
 );
 
 CREATE TABLE IF NOT EXISTS recommendations (

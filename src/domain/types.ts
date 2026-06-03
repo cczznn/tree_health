@@ -8,6 +8,8 @@ export interface User {
   id: string;
   name: string;
   goalType: GoalType;
+  age: number | null;
+  gender: 'male' | 'female' | null;
   createdAt: string;
 }
 
@@ -77,6 +79,7 @@ export interface WorkoutCheckin {
   date: string;
   status: CheckinStatus;
   note: string | null;
+  completedExercises: string[];
   createdAt: string;
 }
 
@@ -85,10 +88,28 @@ export interface BodyMetric {
   userId: string;
   metricDate: string;
   weight: number;
+  height: number | null;
   waist: number | null;
+  chest: number | null;
   hip: number | null;
   thigh: number | null;
   note: string | null;
+}
+
+export interface DietPlan {
+  id: string;
+  userId: string;
+  title: string;
+  goalType: GoalType;
+  content: {
+    dailyCalories: number;
+    principles: string[];
+    mealSuggestions: Array<{
+      meal: string;
+      items: Array<{ name: string; grams: number; calories: number }>;
+    }>;
+  };
+  createdAt: string;
 }
 
 export interface Recommendation {

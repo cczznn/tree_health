@@ -980,4 +980,38 @@
   - 小写 `px` 会被 postcss-pxtransform 转换，大写 `PX` 可跳过
   - 三元表达式在 Taro 的条件渲染中不如 `&&` 可靠
   - `window.confirm()` 比自定义确认 UI 在 Taro H5 中更可靠
+
+### 63. 训练计划分条目打卡
+
+- **时间戳**：2026-06-03
+- **任务编号**：T8（扩展）
+- **阶段**：功能增强
+- **触发技能**：`systematic-debugging`
+- **关键上下文**：用户要求训练计划的每个动作可以独立打卡完成，而不是整天的"一刀切"。需要修改 WorkoutCheckin 数据模型、后端服务、MySQL 仓库和前端 UI。
+- **动作**：
+  - `WorkoutCheckin` 类型新增 `completedExercises: string[]` 字段
+  - MySQL `workout_checkins` 表新增 `completed_exercises JSON` 列
+  - `MysqlWorkoutCheckinRepository` 新增 `update` 方法，`rowToCheckin` 修复日期格式化（`Date` → `ISO string`）
+  - `WorkoutCheckinService.createCheckin` 改为 upsert 模式：有当日记录则 toggle 指定 exercise，无则创建新记录
+  - 移除 plan 归属校验（计划为共享模板，不应校验 `plan.userId !== userId`）
+  - 前端 `addWorkoutCheckin` 新增 `exerciseName` 参数
+  - 计划页今日训练卡片改造：每个动作前显示 22×22px 复选框，点击 toggle 完成状态
+  - 完成状态通过 `completedToday` state 管理，直接从 API 返回值设置
+  - 按钮样式全用 `px` 单位（避免 Taro 运行时转换 `rpx` 失败导致复选框尺寸为 0）
+  - 添加"已完成"/"已取消"反馈提示（绿色卡片，1.5 秒自动消失）
+- **踩坑与修复**：
+  - `MysqlWorkoutCheckinRepository` 缺少 `update` 方法导致第二次打卡报 500 错误 → 补充 `update` SQL
+  - `rowToCheckin` 中 `String(Date).slice(0,10)` 返回 `"Tue Jun 02"` 而非 `"2026-06-02"` → 改用 `Date.toISOString().slice(0,10)`
+  - `useEffect` 监听 `checkins` 变化时重新提取 `completedExercises`，覆盖了 `toggleExercise` 刚设置的正确值 → 移除 `useEffect`，改为 `loadPlan` 中直接提取
+  - 复选框 `rpx` 在内联样式中被 Taro 运行时忽略导致宽高为 0 → 全部改用 `px`
+  - Plan 归属校验阻止真实用户查询打卡记录（旧计划 `userId: 'system'`）→ 移除校验
+- **结果**：
+  - 每个训练动作可独立勾选 ✓，刷新不丢失
+  - 勾选显示绿色背景 + 白色 ✓ + 文字删除线，取消恢复原状
+  - 操作反馈即时显示"已完成"/"已取消"
+- **学到的教训**：
+  - Taro H5 的内联 `rpx` 是持续踩坑点——复选框的 `width/height: '36rpx'` 在浏览器里不生效，`px` 则直接可靠
+  - React `useEffect` 对数组状态的二次计算很容易产生"设置→覆盖"的竞态，直接在一次异步回调中完成所有状态更新更安全
+  - MySQL JSON 列配合 `mysql2` 时需注意返回值是字符串还是已解析对象，做好兼容判断
+  - 共享模板（plan）不应校验 `userId` 归属，避免 multi-tenant 场景下 404
   - 渐进式展示（汇总 → 详情）在不加页面跳转的前提下增加信息密度

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { View, Text, Input } from '@tarojs/components'
-import { getStoredUser, clearStoredUser, setStoredUser, getUserId, type AuthUser } from '../lib/auth-store'
+import Taro from '@tarojs/taro'
+import { getStoredUser, clearStoredUser, setStoredUser, type AuthUser } from '../lib/auth-store'
 
 type GoalType = 'fat_loss' | 'maintain' | 'muscle_gain'
 const GOAL_LABELS: Record<GoalType, string> = { fat_loss: '减脂', maintain: '维持', muscle_gain: '增肌' }
@@ -14,8 +15,6 @@ function MePage() {
   const [password, setPassword] = useState('')
   const [goalType, setGoalType] = useState<GoalType>('maintain')
   const [error, setError] = useState('')
-  const [editingGoal, setEditingGoal] = useState(false)
-  const [newGoal, setNewGoal] = useState<GoalType>('maintain')
 
   useEffect(() => { setUser(getStoredUser()) }, [])
 
@@ -56,30 +55,7 @@ function MePage() {
 
   const logout = () => { clearStoredUser(); setUser(null) }
 
-  const updateGoalType = () => {
-    fetch('/api/auth/goal', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'x-user-id': getUserId() },
-      body: JSON.stringify({ goalType: newGoal }),
-    })
-      .then(async (res) => {
-        const body = await res.json()
-        if (!res.ok) throw new Error(body.error?.message ?? '修改失败')
-        setStoredUser(body.data)
-        setUser(body.data)
-        setEditingGoal(false)
-        setError('')
-      })
-      .catch((err: Error) => setError(err.message))
-  }
-
-  const startEditGoal = () => {
-    setNewGoal((user?.goalType as GoalType) ?? 'maintain')
-    setEditingGoal(true)
-    setError('')
-  }
-
-  // Login form
+  // ---------- Login form
   if (showLogin) {
     return (
       <View className='page'>
@@ -109,7 +85,7 @@ function MePage() {
     )
   }
 
-  // Register form
+  // ---------- Register form
   if (showRegister) {
     return (
       <View className='page'>
@@ -152,7 +128,7 @@ function MePage() {
     )
   }
 
-  // Not logged in
+  // ---------- Not logged in
   if (!user) {
     return (
       <View className='page'>
@@ -180,52 +156,58 @@ function MePage() {
     )
   }
 
-  // Logged in
+  // ---------- Logged in
   return (
     <View className='page'>
       <View className='page-header'>
         <Text className='page-title'>我的</Text>
         <Text className='page-subtitle'>账号、目标、设置</Text>
       </View>
+
       <View className='card'>
-        <Text className='card__title' style={{ marginBottom: '12rpx' }}>个人信息</Text>
-        <Text className='card__text' style={{ marginBottom: '8rpx' }}>用户名：{user.name}</Text>
-        {!editingGoal ? (
-          <View className='food-item' style={{ padding: '8rpx 0' }}>
-            <Text className='card__text'>目标类型：{GOAL_LABELS[user.goalType as GoalType] ?? '维持'}</Text>
-            <Text className='card__action' onClick={startEditGoal}>修改</Text>
+        <Text className='card__title' style={{ marginBottom: '20rpx' }}>个人信息</Text>
+
+        <View style={{ display: 'flex', marginBottom: '18rpx' }}>
+          <View style={{ width: '60rpx', height: '60rpx', borderRadius: '30rpx', background: '#e8f8ef', alignItems: 'center', justifyContent: 'center', display: 'flex', marginRight: '16rpx' }}>
+            <Text style={{ fontSize: '28rpx', fontWeight: '700', color: '#07c160' }}>{user.name[0]?.toUpperCase()}</Text>
           </View>
-        ) : (
-          <View style={{ marginTop: '8rpx' }}>
-            <View className='tag-row' style={{ marginBottom: '12rpx' }}>
-              {GOAL_TYPES.map((t) => {
-                const active = newGoal === t
-                return (
-                  <View key={t} className={`meal-type-tag ${active ? 'meal-type-tag--active' : ''}`} onClick={() => setNewGoal(t)}>
-                    <Text className={active ? 'meal-type-tag__text--active' : 'meal-type-tag__text'}>{GOAL_LABELS[t]}</Text>
-                  </View>
-                )
-              })}
-            </View>
-            {error && <Text style={{ color: '#e74c3c', display: 'block', fontSize: '24rpx', marginBottom: '8rpx' }}>{error}</Text>}
-            <View style={{ display: 'flex' }}>
-              <View style={{ flex: 1, padding: '14rpx', borderRadius: '12rpx', textAlign: 'center', background: '#f5f7fb', border: '2rpx solid #e5e7eb', marginRight: '12rpx' }} onClick={() => { setEditingGoal(false); setError('') }}>
-                <Text style={{ fontSize: '26rpx', color: '#1f2937' }}>取消</Text>
-              </View>
-              <View style={{ flex: 1, padding: '14rpx', borderRadius: '12rpx', textAlign: 'center', background: '#07c160' }} onClick={updateGoalType}>
-                <Text style={{ fontSize: '26rpx', color: '#ffffff' }}>保存目标</Text>
-              </View>
-            </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: '30rpx', fontWeight: '600', display: 'block' }}>{user.name}</Text>
+            <Text style={{ fontSize: '22rpx', color: '#8e8ea0', marginTop: '2rpx' }}>
+              {GOAL_LABELS[user.goalType as GoalType]} · {user.gender === 'male' ? '男' : user.gender === 'female' ? '女' : '?'} · {user.age ?? '?'}岁
+            </Text>
           </View>
-        )}
+        </View>
+
+        <View style={{ display: 'flex', borderTop: '1px solid #f3f3f6', paddingTop: '16rpx' }}>
+          <View style={{ flex: 1, textAlign: 'center' }}>
+            <Text className='hero-card__value' style={{ fontSize: '28rpx', color: '#07c160' }}>{GOAL_LABELS[user.goalType as GoalType]}</Text>
+            <Text className='card__text' style={{ fontSize: '20rpx' }}>目标</Text>
+          </View>
+          <View style={{ flex: 1, textAlign: 'center', borderLeft: '1px solid #f3f3f6', borderRight: '1px solid #f3f3f6' }}>
+            <Text className='hero-card__value' style={{ fontSize: '28rpx' }}>{user.gender === 'male' ? '男' : user.gender === 'female' ? '女' : '—'}</Text>
+            <Text className='card__text' style={{ fontSize: '20rpx' }}>性别</Text>
+          </View>
+          <View style={{ flex: 1, textAlign: 'center' }}>
+            <Text className='hero-card__value' style={{ fontSize: '28rpx' }}>{user.age ?? '—'}</Text>
+            <Text className='card__text' style={{ fontSize: '20rpx' }}>年龄</Text>
+          </View>
+        </View>
       </View>
-      <View className='card'>
-        <Text className='card__title'>关于</Text>
-        <Text className='card__text'>健康管理小程序 v0.2.0</Text>
-        <Text className='card__text'>AI4SE 期末项目</Text>
+
+      <View
+        style={{ padding: '12px', borderRadius: '8px', textAlign: 'center', border: '1.5px solid #07c160', marginBottom: '20rpx' }}
+        onClick={() => Taro.navigateTo({ url: '/pages/edit-profile' })}
+      >
+        <Text style={{ fontSize: '26rpx', color: '#07c160', fontWeight: '600' }}>编辑个人信息</Text>
       </View>
+
+      <View className='card' style={{ textAlign: 'center' }}>
+        <Text style={{ fontSize: '22rpx', color: '#8e8ea0' }}>健康管理 v0.3.0 · AI4SE 期末项目</Text>
+      </View>
+
       <View style={{ marginTop: '20rpx' }}>
-        <View style={{ padding: '20rpx', borderRadius: '16rpx', textAlign: 'center', background: '#f5f7fb', border: '2rpx solid #e5e7eb' }} onClick={logout}>
+        <View style={{ padding: '12px', borderRadius: '8px', textAlign: 'center', background: '#fef0ef', border: '1.5px solid #fecaca' }} onClick={logout}>
           <Text style={{ fontSize: '28rpx', color: '#e74c3c', fontWeight: '500' }}>退出登录</Text>
         </View>
       </View>

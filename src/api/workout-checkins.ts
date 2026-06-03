@@ -31,7 +31,9 @@ export function createWorkoutCheckinsRouter(): Router {
         res.status(400).json({ error: { code: 'MISSING_USER_ID', message: '缺少 X-User-Id 请求头' } })
         return
       }
-      const input: CreateWorkoutCheckinInput = { date: today(), note: '', ...req.body, userId }
+      const input: CreateWorkoutCheckinInput = {
+        date: today(), note: '', ...req.body, userId,
+      }
       const result = await service.createCheckin(input)
       res.status(201).json({ data: result })
     } catch (err) {

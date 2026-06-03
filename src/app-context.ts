@@ -3,8 +3,9 @@ import { MysqlUserRepository } from './auth/mysql-user-repository'
 import {
   MysqlFoodRepository, MysqlMealRecordRepository, MysqlDailyMealSummaryRepository,
   MysqlWorkoutPlanRepository, MysqlWorkoutCheckinRepository, MysqlBodyMetricRepository,
+  MysqlDietPlanRepository,
 } from './repositories/mysql-repos'
-import { FoodRepository, MealRecordRepository, DailyMealSummaryRepository, WorkoutPlanRepository, WorkoutCheckinRepository, BodyMetricRepository } from './repositories'
+import { FoodRepository, MealRecordRepository, DailyMealSummaryRepository, WorkoutPlanRepository, WorkoutCheckinRepository, BodyMetricRepository, DietPlanRepository } from './repositories'
 
 export interface AppContext {
   foodRepo: any
@@ -13,6 +14,7 @@ export interface AppContext {
   workoutPlanRepo: any
   workoutCheckinRepo: any
   bodyMetricRepo: any
+  dietPlanRepo: any
   userRepo: InMemoryUserRepository | MysqlUserRepository
   isMysql: boolean
 }
@@ -29,6 +31,7 @@ export function beginNewAppContext(userRepoOverride?: MysqlUserRepository): AppC
       workoutPlanRepo: new MysqlWorkoutPlanRepository(),
       workoutCheckinRepo: new MysqlWorkoutCheckinRepository(),
       bodyMetricRepo: new MysqlBodyMetricRepository(),
+      dietPlanRepo: new MysqlDietPlanRepository(),
       userRepo: userRepoOverride,
       isMysql: true,
     }
@@ -41,6 +44,7 @@ export function beginNewAppContext(userRepoOverride?: MysqlUserRepository): AppC
       workoutPlanRepo: new WorkoutPlanRepository(),
       workoutCheckinRepo: new WorkoutCheckinRepository(),
       bodyMetricRepo: new BodyMetricRepository(),
+      dietPlanRepo: new DietPlanRepository(),
       userRepo: new InMemoryUserRepository(),
       isMysql: false,
     }

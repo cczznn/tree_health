@@ -328,9 +328,11 @@
 
 ### 预期实现要点
 - 对某一天的训练项提交完成状态
-- 防止重复数据带来混乱，支持按日期区分
+- **分条目打卡（新增）**：每个训练动作可独立勾选完成/取消，`completed_exercises` JSON 数组持久化
+- 点击动作旁的方框 → toggle 该动作的完成状态（add/remove from completedExercises）
+- 已完成动作显示绿色 ✓ + 文字删除线，刷新不丢失
+- 显示"已完成"/"已取消"反馈提示（1.5 秒自动消失）
 - 按 `planId + date` 查询当天所有打卡记录
-- 同一天允许多次提交，保留历史
 - 备注字段用于记录本次打卡的简短说明
 
 ### 验证步骤
@@ -338,13 +340,15 @@
 2. 先写失败测试：同一天重复打卡按设定策略处理
 3. 先写失败测试：按计划查询能看到完成状态
 4. 先写失败测试：记录按时间顺序返回
-5. 实现最少打卡逻辑
-6. 重构查询与聚合
+5. 先写失败测试：分条目 toggle 操作正确更新 completedExercises
+6. 实现最少打卡逻辑
+7. 重构查询与聚合
 
 ### 结果记录
-- 在 `E:/6/ai/last-t8` worktree 中完成实现
+- 在 `E:/6/ai/last-t8` worktree 中完成基础实现
 - 新增 `WorkoutCheckinService`
 - 增补 `WorkoutPlanRepository`、`WorkoutCheckinRepository`，支持按 `planId + date` 查询多条记录
+- **后续升级**：新增 `completedExercises` JSON 字段支持分条目打卡，`MysqlWorkoutCheckinRepository` 新增 `update` 方法，前端复选框 UI 替换原"今日打卡"按钮
 - 先写 `tests/workout-checkins/workout-checkin-service.test.ts`，覆盖首次打卡、重复打卡、按日查询与越权场景
 - 同一天重复打卡不报错，记录按时间顺序保留
 - `npm run typecheck` 与 `npm test` 均通过
@@ -398,41 +402,43 @@
 
 ---
 
-## T10. 基础 AI 推荐生成
+## T10. 基础 AI 推荐生成 → 升级为 DeepSeek LLM
 
 ### 目标
-基于饮食、计划和身体数据生成受约束、可解释、可回退的建议。T10 已在独立 worktree `E:/6/ai/last-t10` 中重新启动，采用方案 B：规则引擎 + 模板化文案；本次不做开放式聊天、不做医疗建议、不做长期记忆，只做一轮结构化推荐生成。输入最小依赖为饮食统计、健身计划、体重趋势和用户目标信息。
+**第一阶段（已完成）**：规则引擎 + 模板化文案，基于饮食统计、健身计划、体重趋势生成日推荐。  
+**第二阶段（本次升级）**：引入 DeepSeek API 生成结构化训练计划 + 饮食建议，替换当前的规则模板。用户点击”生成 AI 计划”按钮，系统自动采集身体数据（性别、年龄、体重、身高）和目标，发送给 DeepSeek，解析返回的 JSON，存入 workout_plans 表并在前端展示。
 
 ### 涉及文件
-- `src/recommendations/**`
-- `src/api/recommendations.*`
-- `tests/recommendations/**`
-- `src/domain/**`
-- `src/stats/**`
-- `src/workout-plans/**`
-- `src/body-metrics/**`
+- `src/workout-plans/workout-plan-service.ts` — 新增 `generateAiPlan()` 方法
+- `src/api/workout-plans.ts` — 新增 `POST /generate-ai` 路由
+- `src/lib/ai-client.ts` — 新建，DeepSeek API 调用封装（兼容 OpenAI SDK）
+- `src/pages/plan.tsx` — 新增”生成 AI 计划”按钮、loading 态、饮食建议展示
+- `src/lib/api.ts` — 新增 `generateAiPlan()` 前端调用
+- `package.json` — 新增 `openai` 依赖
 
 ### 预期实现要点
-- 输入结构化数据后生成饮食建议、运动建议、每日摘要
-- 优先使用规则 + 模板 + 结构化提示词
-- 数据不足时返回通用建议，且保留可识别的降级标记
-- 不输出高风险医疗结论或诊断性措辞
-- 推荐输出保持结构化，便于前端展示与后续迭代
-- 推荐内容以“原因 + 建议”方式组织，减少空泛结论
+- 环境变量 `DEEPSEEK_API_KEY` 配置 API 密钥
+- DeepSeek endpoint: `https://api.deepseek.com/v1`，model: `deepseek-chat`，temperature: 0.3
+- **训练计划问卷（新增）**：生成训练计划前弹出 7 题问卷：
+  - 一周练几天（1–7）、一次练多久（15/30/45/60/90 分钟）
+  - 目标部位（多选：胸/背/肩/手臂/腿/核心/全身）
+  - 经验水平（新手/有一定基础/进阶）、训练场所（居家/健身房/都可以）
+  - 可用器械（多选：无器械/哑铃/杠铃/弹力带/综合器械）
+  - 训练强度（温和/中等/高强度）
+- Prompt 包含：用户性别、年龄、体重、身高、目标 + 7 题问卷答案
+- AI 输出：`{ title, frequencyPerWeek, durationMinutes, weeklySchedule }`
+- 饮食计划生成不受影响，继续使用身体数据 + 公式热量参考
+- JSON 解析失败重试一次，再次失败回退到规则模板
+- AI 生成的 plan 存入 workout_plans 表，`generated_by = 'ai'`
+- 数据不足时（缺性别/年龄/体重/身高）返回提示，不调用 AI
 
 ### 验证步骤
-1. 先写失败测试：给定不同输入时输出类别正确
-2. 先写失败测试：数据不足时会触发降级模板
-3. 先写失败测试：建议内容包含可解释字段
-4. 实现最少推荐生成逻辑
-5. 重构提示词构造与规则层
-
-### 结果记录
-- 在 `E:/6/ai/last-t10` worktree 中重新启动实现
-- 设计采用规则引擎 + 模板化文案，不引入自由聊天；实现上保持单轮生成、结构化输出和可解释建议
-- 最小输入收敛为：饮食统计、健身计划、体重趋势、用户目标信息
-- 已补齐 `RecommendationService` 与对应测试骨架，并通过 `npm run typecheck` / `npm test`
-- 对应 commit hash：`TBD`
+1. 先写失败测试：模拟 DeepSeek 响应，验证 JSON 解析正确
+2. 先写失败测试：缺少 API key 时回退到规则模板
+3. 先写失败测试：API 返回非 JSON 时重试并回退
+4. 实现 AI 生成逻辑 + 问卷 UI
+5. 手动测试：设置个人信息 → 录入身体数据 → 点击生成训练计划 → 填问卷 → 计划展示
+6. `npm test` 全部通过，`npm run build:h5` 成功
 
 ### 依赖
 - T5、T7、T9
@@ -591,7 +597,7 @@
 - T11 → T12
 
 ### 第四阶段：交付收尾
-- T13
+- T13（T10 第二阶段 AI 升级可并行）
 
 ---
 

@@ -8,6 +8,8 @@ export interface UserRow {
   name: string
   password_hash: string
   goal_type: GoalType
+  age: number | null
+  gender: 'male' | 'female' | null
   created_at: string
 }
 
@@ -34,11 +36,13 @@ export class AuthService {
       name: name.trim(),
       password_hash: passwordHash,
       goal_type: goalType,
+      age: null,
+      gender: null,
       created_at: new Date().toISOString(),
     }
 
     await this.userRepo.create(user)
-    return { id: user.id, name: user.name, goalType: user.goal_type }
+    return { id: user.id, name: user.name, goalType: user.goal_type, age: user.age, gender: user.gender }
   }
 
   async login(name: string, password: string) {
@@ -50,7 +54,7 @@ export class AuthService {
     const valid = await bcrypt.compare(password, user.password_hash)
     if (!valid) throw new AppError('AUTH_FAILED', 401, '用户名或密码错误')
 
-    return { id: user.id, name: user.name, goalType: user.goal_type }
+    return { id: user.id, name: user.name, goalType: user.goal_type, age: user.age, gender: user.gender }
   }
 
   async updateGoalType(userId: string, goalType: GoalType) {
@@ -62,6 +66,23 @@ export class AuthService {
 
     const updated = { ...user, goal_type: goalType }
     await this.userRepo.update(userId, updated)
-    return { id: updated.id, name: updated.name, goalType: updated.goal_type }
+    return { id: updated.id, name: updated.name, goalType: updated.goal_type, age: updated.age, gender: updated.gender }
+  }
+
+  async updateProfile(userId: string, data: { age?: number | null; gender?: 'male' | 'female' | null }): Promise<{ id: string; name: string; goalType: GoalType; age: number | null; gender: 'male' | 'female' | null }> {
+    const user = await this.userRepo.findById(userId)
+    if (!user) throw new AppError('USER_NOT_FOUND', 404, '用户不存在')
+
+    const updated = { ...user }
+    if (data.age !== undefined) {
+      if (data.age !== null && (data.age < 10 || data.age > 120)) throw new ValidationError('年龄需在 10-120 之间')
+      updated.age = data.age
+    }
+    if (data.gender !== undefined) {
+      if (data.gender !== null && !['male', 'female'].includes(data.gender)) throw new ValidationError('性别无效')
+      updated.gender = data.gender
+    }
+    await this.userRepo.update(userId, updated)
+    return { id: updated.id, name: updated.name, goalType: updated.goal_type, age: updated.age, gender: updated.gender }
   }
 }
