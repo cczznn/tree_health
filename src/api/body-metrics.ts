@@ -45,7 +45,21 @@ export function createBodyMetricsRouter(): Router {
         note: req.body.note ?? null,
       }
       const result = await service.createMetric(input)
-      res.status(201).json({ data: result })
+      // Auto-sync weight/height to user profile
+      try {
+        const ctx = getAppContext()
+        const updated = await ctx.userRepo.update(userId, {
+          ...(await ctx.userRepo.findById(userId))!,
+          weight: result.weight,
+          height: result.height || (await ctx.userRepo.findById(userId))!.height,
+        })
+        res.status(201).json({
+          data: result,
+          profileUpdated: true,
+        })
+      } catch {
+        res.status(201).json({ data: result })
+      }
     } catch (err) {
       handleError(err, res)
     }

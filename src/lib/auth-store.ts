@@ -6,6 +6,8 @@ export interface AuthUser {
   goalType: string
   age: number | null
   gender: 'male' | 'female' | null
+  weight: number | null
+  height: number | null
 }
 
 export function getStoredUser(): AuthUser | null {

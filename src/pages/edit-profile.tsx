@@ -10,6 +10,8 @@ const GOAL_TYPES: GoalType[] = ['fat_loss', 'maintain', 'muscle_gain']
 function EditProfilePage() {
   const user = getStoredUser()
   const [age, setAge] = useState(user?.age ? String(user.age) : '')
+  const [weight, setWeight] = useState(user?.weight ? String(user.weight) : '')
+  const [height, setHeight] = useState(user?.height ? String(user.height) : '')
   const [gender, setGender] = useState<'male' | 'female' | null>(user?.gender ?? null)
   const [goalType, setGoalType] = useState<GoalType>((user?.goalType as GoalType) ?? 'maintain')
   const [error, setError] = useState('')
@@ -17,9 +19,11 @@ function EditProfilePage() {
   const saveAll = () => {
     const ageVal = age ? parseInt(age, 10) : null
     if (ageVal !== null && (ageVal < 10 || ageVal > 120)) { setError('年龄需在 10-120 之间'); return }
+    const weightVal = weight ? parseFloat(weight) : null
+    const heightVal = height ? parseFloat(height) : null
 
     const userId = getUserId()
-    const profileBody = JSON.stringify({ age: ageVal, gender })
+    const profileBody = JSON.stringify({ age: ageVal, gender, weight: weightVal, height: heightVal })
 
     fetch('/api/auth/profile', {
       method: 'PUT', headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
@@ -65,6 +69,17 @@ function EditProfilePage() {
         <View style={{ marginBottom: '16rpx' }}>
           <Text style={{ fontSize: '24rpx', color: '#6b7280', marginBottom: '8rpx', display: 'block' }}>年龄</Text>
           <Input className='search-input' type='digit' placeholder='10-120' value={age} onInput={(e) => setAge(e.detail.value)} />
+        </View>
+
+        <View style={{ display: 'flex', gap: '6px', marginBottom: '16rpx' }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: '24rpx', color: '#6b7280', marginBottom: '8rpx', display: 'block' }}>体重 kg（选填）</Text>
+            <Input className='search-input' type='digit' placeholder='如 70' value={weight} onInput={(e) => setWeight(e.detail.value)} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: '24rpx', color: '#6b7280', marginBottom: '8rpx', display: 'block' }}>身高 cm（选填）</Text>
+            <Input className='search-input' type='digit' placeholder='如 172' value={height} onInput={(e) => setHeight(e.detail.value)} />
+          </View>
         </View>
       </View>
 

@@ -170,7 +170,7 @@ function MePage() {
         <View style={{ marginBottom: '18rpx', textAlign: 'center' }}>
           <Text style={{ fontSize: '36rpx', fontWeight: '600', display: 'block' }}>{user.name}</Text>
           <Text style={{ fontSize: '24rpx', color: '#8e8ea0', marginTop: '4rpx' }}>
-            {GOAL_LABELS[user.goalType as GoalType]} · {user.gender === 'male' ? '男' : user.gender === 'female' ? '女' : '?'} · {user.age ?? '?'}岁
+            {GOAL_LABELS[user.goalType as GoalType]} · {user.gender === 'male' ? '男' : user.gender === 'female' ? '女' : '?'} · {user.age ?? '?'}岁{user.weight ? ` · ${user.weight}kg` : ''}{user.height ? ` · ${user.height}cm` : ''}
           </Text>
         </View>
 

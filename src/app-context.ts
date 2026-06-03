@@ -57,6 +57,8 @@ export function beginNewAppContext(userRepoOverride?: MysqlUserRepository): AppC
       goal_type: 'maintain',
       age: null,
       gender: null,
+      weight: null,
+      height: null,
       created_at: new Date().toISOString(),
     })
 

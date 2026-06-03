@@ -10,6 +10,8 @@ export interface User {
   goalType: GoalType;
   age: number | null;
   gender: 'male' | 'female' | null;
+  weight: number | null;
+  height: number | null;
   createdAt: string;
 }
 
