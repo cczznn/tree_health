@@ -167,16 +167,11 @@ function MePage() {
       <View className='card'>
         <Text className='card__title' style={{ marginBottom: '20rpx' }}>个人信息</Text>
 
-        <View style={{ display: 'flex', marginBottom: '18rpx' }}>
-          <View style={{ width: '60rpx', height: '60rpx', borderRadius: '30rpx', background: '#e8f8ef', alignItems: 'center', justifyContent: 'center', display: 'flex', marginRight: '16rpx' }}>
-            <Text style={{ fontSize: '28rpx', fontWeight: '700', color: '#07c160' }}>{user.name[0]?.toUpperCase()}</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: '30rpx', fontWeight: '600', display: 'block' }}>{user.name}</Text>
-            <Text style={{ fontSize: '22rpx', color: '#8e8ea0', marginTop: '2rpx' }}>
-              {GOAL_LABELS[user.goalType as GoalType]} · {user.gender === 'male' ? '男' : user.gender === 'female' ? '女' : '?'} · {user.age ?? '?'}岁
-            </Text>
-          </View>
+        <View style={{ marginBottom: '18rpx', textAlign: 'center' }}>
+          <Text style={{ fontSize: '36rpx', fontWeight: '600', display: 'block' }}>{user.name}</Text>
+          <Text style={{ fontSize: '24rpx', color: '#8e8ea0', marginTop: '4rpx' }}>
+            {GOAL_LABELS[user.goalType as GoalType]} · {user.gender === 'male' ? '男' : user.gender === 'female' ? '女' : '?'} · {user.age ?? '?'}岁
+          </Text>
         </View>
 
         <View style={{ display: 'flex', borderTop: '1px solid #f3f3f6', paddingTop: '16rpx' }}>
