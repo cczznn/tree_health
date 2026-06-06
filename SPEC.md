@@ -305,7 +305,12 @@
 #### 错误处理
 - AI API 不可用时回退到规则模板计划
 - AI 返回 JSON 解析失败时重试一次，再失败使用规则模板
-- 计划生成失败时展示默认新手计划
+- 无预设计划，需要用户主动生成
+
+#### 饮食计划生成
+- 点击"生成饮食计划"→ 选择活动量（5 级）→ 点击"开始生成"
+- AI 使用 Mifflin-St Jeor 公式自行计算 dailyCalories
+- 后端从 217 种食物库匹配营养素自动补全 macros
 
 ---
 
@@ -398,8 +403,10 @@
 - name
 - password_hash
 - goalType（减脂/增肌/维持）
-- age（可选，用于AI热量计算）
-- gender（可选，male/female，用于AI热量计算）
+- age（注册必填，10-120）
+- gender（注册必填，male/female）
+- weight（注册必填，身体记录更新时自动同步）
+- height（注册必填，身体记录更新时自动同步）
 - createdAt
 
 #### Food
@@ -519,10 +526,10 @@
 
 ### 7.4 健身计划
 - `POST /workout-plans/generate`：生成基础计划（规则模板）
-- `POST /workout-plans/generate-ai`：**AI 生成**（调用 DeepSeek，body `{ type: 'training' | 'diet' | 'both' }`）
-- `GET /workout-plans/current`：获取当前训练计划
-- `GET /workout-plans/diet-current`：获取当前饮食计划
-- `POST /workout-checkins`：提交打卡
+- `POST /workout-plans/generate-ai`：**AI 生成**（调用 DeepSeek，body `{ type: 'training' | 'diet' | 'both', ...questionnaire/extras }`）
+- `GET /workout-plans/current`：获取当前训练计划（需登录）
+- `GET /workout-plans/diet-current`：获取当前饮食计划（需登录）
+- `POST /workout-checkins`：提交打卡（支持 `exerciseName` 分条目打卡）
 
 ### 7.5 身体数据
 - `GET /body-metrics?range=`：获取身体数据趋势
