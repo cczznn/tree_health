@@ -61,25 +61,6 @@ export function beginNewAppContext(userRepoOverride?: MysqlUserRepository): AppC
       height: null,
       created_at: new Date().toISOString(),
     })
-
-    const planStore = (currentContext.workoutPlanRepo as any).store as Map<string, any>
-    const planId = 'wp-1'
-    if (!planStore.has(planId)) {
-      planStore.set(planId, {
-        id: planId, userId: 'system', title: '新手入门训练计划', goalType: 'maintain',
-        frequencyPerWeek: 3, durationMinutes: 30,
-        planContent: {
-          summary: '每周 3 次全身训练，适合新手入门',
-          notes: '训练前后做好热身与拉伸，量力而行',
-          weeklySchedule: [
-            { dayLabel: '周一', focus: '上肢 + 有氧', durationMinutes: 30, exercises: ['俯卧撑 3×12', '哑铃弯举 3×10', '慢跑 15 分钟'] },
-            { dayLabel: '周三', focus: '下肢 + 核心', durationMinutes: 30, exercises: ['深蹲 3×15', '弓步走 3×12', '平板支撑 3×30 秒'] },
-            { dayLabel: '周五', focus: '全身 + 有氧', durationMinutes: 30, exercises: ['波比跳 3×10', '开合跳 3×20', '轻松骑行 15 分钟'] },
-          ],
-        },
-        createdAt: new Date().toISOString(),
-      })
-    }
   }
 
   return currentContext
