@@ -93,19 +93,28 @@ export async function generateTraining(input: AiPlanInput, q?: TrainingQuestionn
 
 // ── Generate diet plan only ──
 export async function generateDiet(input: AiPlanInput, activityLevel?: string): Promise<string> {
-  const { calcDailyTarget, getActivityFactor } = await import('./calorie-calc')
-  const al = (activityLevel || 'sedentary') as any
-  const factor = getActivityFactor(al)
-  const alLabel = ({sedentary:'久坐不动',light:'轻度活动(每周1-2天)',moderate:'中度活动(每周3-5天)',active:'高度活动(每周6-7天)',athlete:'运动员(每天高强度)'} as any)[al] || '久坐不动'
+  const al = activityLevel || 'sedentary'
+  const alInfo: Record<string, string> = {
+    sedentary: '久坐不动（几乎不运动），活动系数 1.2',
+    light: '轻度活动（每周1-2天），活动系数 1.375',
+    moderate: '中度活动（每周3-5天），活动系数 1.55',
+    active: '高度活动（每周6-7天），活动系数 1.725',
+    athlete: '运动员（每天高强度），活动系数 1.9',
+  }
 
-  let calorieRef = ''
-  try {
-    const target = calcDailyTarget({ weightKg: input.weightKg, heightCm: input.heightCm, age: input.age, gender: input.gender, goalType: input.goalType, activityLevel: al })
-    calorieRef = `\n活动量：${alLabel}（系数 ${factor}）\n参考热量目标：${target.target} kcal（BMR: ${target.bmr}, TDEE: ${target.tdee}）\n请将 dailyCalories 设置为接近此参考值，并根据活动量调整蛋白质和碳水比例。`
-  } catch { /* ignore */ }
+  const goalLabel = input.goalType === 'fat_loss' ? '减脂' : input.goalType === 'muscle_gain' ? '增肌' : '维持体重'
 
   return callAi(
     `你是一个专业营养师。根据用户数据生成个性化饮食计划。输出严格 JSON，不要 markdown。
+
+热量计算公式（Mifflin-St Jeor）：
+- 男性 BMR = 10 × 体重(kg) + 6.25 × 身高(cm) - 5 × 年龄 + 5
+- 女性 BMR = 10 × 体重(kg) + 6.25 × 身高(cm) - 5 × 年龄 - 161
+- 基础代谢 BMR × 活动系数 = TDEE（每日消耗）
+- ${goalLabel === '减脂' ? '减脂期：TDEE - 300~500 kcal' : goalLabel === '增肌' ? '增肌期：TDEE + 300~500 kcal' : '维持期：TDEE 不变'}
+- 活动量：${alInfo[al] || alInfo.sedentary}
+
+请用公式自行计算 dailyCalories，填入 dietAdvice。
 
 输出格式（每个食物对象必须包含全部字段）：
 {
@@ -124,7 +133,7 @@ export async function generateDiet(input: AiPlanInput, activityLevel?: string): 
 - macros 对象必须包含 protein、fat、carbs 且数值 = 所有餐食中同名营养素相加的总和
 - 食物尽量用中国常见食物
 - 三餐总热量接近 dailyCalories`,
-    userProfile(input) + calorieRef,
+    userProfile(input),
   )
 }
 
