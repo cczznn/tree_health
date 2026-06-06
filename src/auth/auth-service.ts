@@ -25,9 +25,13 @@ export interface IUserRepository {
 export class AuthService {
   constructor(private readonly userRepo: IUserRepository) {}
 
-  async register(name: string, password: string, goalType: GoalType = 'maintain') {
+  async register(name: string, password: string, goalType: GoalType = 'maintain', profile?: { age?: number; gender?: 'male' | 'female'; weight?: number; height?: number }) {
     if (!name || name.trim().length < 2) throw new ValidationError('用户名至少 2 个字符')
     if (!password || password.length < 4) throw new ValidationError('密码至少 4 位')
+    if (!profile?.gender || !['male', 'female'].includes(profile.gender)) throw new ValidationError('请选择性别')
+    if (!profile?.age || profile.age < 10 || profile.age > 120) throw new ValidationError('年龄需在 10-120 之间')
+    if (!profile?.weight || profile.weight <= 0 || profile.weight > 500) throw new ValidationError('请输入有效体重')
+    if (!profile?.height || profile.height <= 0 || profile.height > 250) throw new ValidationError('请输入有效身高')
 
     const existing = await this.userRepo.findByName(name.trim())
     if (existing) throw new AppError('USER_EXISTS', 409, '用户名已存在')
@@ -38,10 +42,10 @@ export class AuthService {
       name: name.trim(),
       password_hash: passwordHash,
       goal_type: goalType,
-      age: null,
-      gender: null,
-      weight: null,
-      height: null,
+      age: profile.age,
+      gender: profile.gender,
+      weight: profile.weight,
+      height: profile.height,
       created_at: new Date().toISOString(),
     }
 

@@ -14,6 +14,10 @@ function MePage() {
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
   const [goalType, setGoalType] = useState<GoalType>('maintain')
+  const [regAge, setRegAge] = useState('')
+  const [regGender, setRegGender] = useState<'male' | 'female' | ''>('')
+  const [regWeight, setRegWeight] = useState('')
+  const [regHeight, setRegHeight] = useState('')
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -54,7 +58,7 @@ function MePage() {
     if (password.length < 4) { setError('密码至少 4 位'); return }
     fetch('/api/auth/register', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, password, goalType }),
+      body: JSON.stringify({ name, password, goalType, age: regAge, gender: regGender, weight: regWeight, height: regHeight }),
     })
       .then(async (res) => {
         const body = await res.json()
@@ -63,6 +67,7 @@ function MePage() {
         setUser(body.data)
         setShowRegister(false)
         setName(''); setPassword(''); setError('')
+        setRegAge(''); setRegGender(''); setRegWeight(''); setRegHeight('')
       })
       .catch((err: Error) => setError(err.message))
   }
@@ -114,6 +119,31 @@ function MePage() {
           <View style={{ marginBottom: '16rpx' }}>
             <Text style={{ fontSize: '24rpx', color: '#6b7280', marginBottom: '8rpx', display: 'block' }}>密码</Text>
             <Input className='search-input' type='text' password placeholder='输入密码' value={password} onInput={(e) => setPassword(e.detail.value)} />
+          </View>
+          <View style={{ marginBottom: '16rpx' }}>
+            <Text style={{ fontSize: '24rpx', color: '#6b7280', marginBottom: '8rpx', display: 'block' }}>性别 *</Text>
+            <View className='tag-row'>
+              <View className={`meal-type-tag ${regGender === 'male' ? 'meal-type-tag--active' : ''}`} onClick={() => setRegGender('male')}>
+                <Text className={regGender === 'male' ? 'meal-type-tag__text--active' : 'meal-type-tag__text'}>男</Text>
+              </View>
+              <View className={`meal-type-tag ${regGender === 'female' ? 'meal-type-tag--active' : ''}`} onClick={() => setRegGender('female')}>
+                <Text className={regGender === 'female' ? 'meal-type-tag__text--active' : 'meal-type-tag__text'}>女</Text>
+              </View>
+            </View>
+          </View>
+          <View style={{ marginBottom: '16rpx' }}>
+            <Text style={{ fontSize: '24rpx', color: '#6b7280', marginBottom: '8rpx', display: 'block' }}>年龄 *</Text>
+            <Input className='search-input' type='digit' placeholder='10-120' value={regAge} onInput={(e) => setRegAge(e.detail.value)} />
+          </View>
+          <View style={{ display: 'flex', gap: '6px', marginBottom: '16rpx' }}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: '24rpx', color: '#6b7280', marginBottom: '8rpx', display: 'block' }}>体重 (kg) *</Text>
+              <Input className='search-input' type='digit' placeholder='如 70' value={regWeight} onInput={(e) => setRegWeight(e.detail.value)} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: '24rpx', color: '#6b7280', marginBottom: '8rpx', display: 'block' }}>身高 (cm) *</Text>
+              <Input className='search-input' type='digit' placeholder='如 172' value={regHeight} onInput={(e) => setRegHeight(e.detail.value)} />
+            </View>
           </View>
           <View style={{ marginBottom: '16rpx' }}>
             <Text style={{ fontSize: '24rpx', color: '#6b7280', marginBottom: '8rpx', display: 'block' }}>目标</Text>

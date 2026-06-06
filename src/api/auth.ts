@@ -9,8 +9,13 @@ export function createAuthRouter(userRepo: { findByName(name: string): Promise<U
 
   router.post('/register', async (req: Request, res: Response) => {
     try {
-      const { name, password, goalType } = req.body
-      const user = await service.register(name, password, goalType ?? 'maintain')
+      const { name, password, goalType, age, gender, weight, height } = req.body
+      const user = await service.register(name, password, goalType ?? 'maintain', {
+        age: age ? parseInt(age, 10) : undefined,
+        gender: gender || undefined,
+        weight: weight ? parseFloat(weight) : undefined,
+        height: height ? parseFloat(height) : undefined,
+      })
       res.status(201).json({ data: user })
     } catch (err) {
       handleError(err, res)
