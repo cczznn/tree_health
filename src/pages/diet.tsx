@@ -17,7 +17,7 @@ function DietPage() {
   const [amount, setAmount] = useState('')
   const [mealType, setMealType] = useState<MealType>('breakfast')
   const [formErrors, setFormErrors] = useState<string[]>([])
-  const [mealRecords, setMealRecords] = useState<Array<{ id: string; foodId: string; mealType: string; amount: number; calories: number; protein: number; fat: number; carbs: number; fiber: number; recordDate: string; note: string | null }>>([])
+  const [mealRecords, setMealRecords] = useState<Array<{ id: string; foodId: string; foodName?: string; mealType: string; amount: number; calories: number; protein: number; fat: number; carbs: number; fiber: number; recordDate: string; note: string | null }>>([])
   const [showRecords, setShowRecords] = useState(false)
 
   const [showCustomForm, setShowCustomForm] = useState(false)
@@ -327,7 +327,7 @@ function DietPage() {
               mealRecords.map((r) => (
                 <View key={r.id} className='food-item'>
                   <View>
-                    <Text className='food-item__name'>{getMealTypeLabel(r.mealType as MealType)} · {r.amount}g</Text>
+                    <Text className='food-item__name'>{r.foodName || '食物'} · {getMealTypeLabel(r.mealType as MealType)} · {r.amount}g</Text>
                     <Text className='food-item__calories'>
                       {r.calories} kcal · 蛋白质 {r.protein}g · 脂肪 {r.fat}g · 碳水 {r.carbs}g · 纤维 {r.fiber}g
                     </Text>

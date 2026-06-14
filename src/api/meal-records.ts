@@ -45,9 +45,17 @@ export function createMealRecordsRouter(): Router {
       const date = getQueryValue(req.query.date);
       if (!date) throw new ValidationError('日期不能为空');
       const data = await mealRecordService.getMealRecordsByDate(userId, date);
+      // Enrich with food names
+      const { foodRepo } = getAppContext()
+      const enriched = await Promise.all(data.map(async (r: any) => {
+        try {
+          const food = await foodRepo.getById(r.foodId)
+          return { ...r, foodName: food?.name || r.foodId }
+        } catch { return { ...r, foodName: r.foodId } }
+      }))
       const summary = await mealRecordService.getSummaryByDate(userId, date);
       res.json({
-        data,
+        data: enriched,
         summary: summary ?? { mealCount: 0, totalCalories: 0, totalProtein: 0, totalFat: 0, totalCarbs: 0, totalFiber: 0, totalSugar: 0, totalSodium: 0 },
       });
     } catch (err) {
