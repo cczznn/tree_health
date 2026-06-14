@@ -20,13 +20,10 @@ export function createWorkoutPlansRouter(): Router {
           res.json({ data: stored })
           return
         }
-      } catch { /* fall through to generate */ }
+      } catch { /* fall through */ }
 
-      // Fallback: generate a rule-based template
-      const goalType = getGoalType(req.query.goalType);
-      const frequencyPerWeek = getFrequencyPerWeek(req.query.frequencyPerWeek);
-      const data = service.generatePlan({ goalType, frequencyPerWeek });
-      res.json({ data });
+      // No plan found
+      res.json({ data: null })
     } catch (err) {
       handleError(err, res);
     }
@@ -59,23 +56,16 @@ export function createWorkoutPlansRouter(): Router {
         res.status(404).json({ error: { code: 'NOT_FOUND', message: '用户不存在' } });
         return;
       }
-      if (!user.age || !user.gender) {
-        res.status(400).json({ error: { code: 'INSUFFICIENT_DATA', message: '请先在"我的"页面设置性别和年龄' } });
-        return;
-      }
-
-      const metrics = await ctx.bodyMetricRepo.findByUser(userId);
-      const latest = metrics.sort((a: any, b: any) => b.metricDate.localeCompare(a.metricDate))[0];
-      if (!latest || !latest.weight || !latest.height) {
-        res.status(400).json({ error: { code: 'INSUFFICIENT_DATA', message: '请先在"身体"页面录入体重和身高' } });
+      if (!user.age || !user.gender || !user.weight || !user.height) {
+        res.status(400).json({ error: { code: 'INSUFFICIENT_DATA', message: '请先在"我的"页面完善个人信息（性别、年龄、体重、身高）' } });
         return;
       }
 
       const input = {
         gender: user.gender as 'male' | 'female',
         age: user.age,
-        weightKg: latest.weight,
-        heightCm: latest.height,
+        weightKg: user.weight,
+        heightCm: user.height,
         goalType: user.goal_type as any,
       };
 
