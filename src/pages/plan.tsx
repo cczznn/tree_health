@@ -32,7 +32,7 @@ const showSuccess = (msg: string) => { setSuccessMsg(msg); setTimeout(() => setS
 
   const toggleExercise = (exerciseName: string) => {
     if (!requireLogin()) return
-    addWorkoutCheckin('', exerciseName)
+    addWorkoutCheckin('', exerciseName, plan?.id)
       .then(({ data }) => {
         const completed = data.completedExercises || []
         setCompletedToday(completed)
@@ -123,7 +123,7 @@ const showSuccess = (msg: string) => { setSuccessMsg(msg); setTimeout(() => setS
 
   const submitCheckin = () => {
     if (!requireLogin()) return
-    addWorkoutCheckin(note)
+    addWorkoutCheckin(note, undefined, plan?.id)
       .then(({ data }) => {
         setCheckins((prev) => [data, ...prev])
         setShowCheckin(false)

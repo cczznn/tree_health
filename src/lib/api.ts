@@ -172,10 +172,10 @@ export async function getWorkoutCheckins() {
   )
 }
 
-export async function addWorkoutCheckin(note: string, exerciseName?: string) {
+export async function addWorkoutCheckin(note: string, exerciseName?: string, planId?: string) {
   return request<{ data: { id: string; planId: string; date: string; note: string | null; completedExercises: string[] } }>('/api/workout-checkins', {
     method: 'POST',
-    body: JSON.stringify({ planId: 'wp-1', date: today(), note, exerciseName }),
+    body: JSON.stringify({ planId: planId || 'wp-1', date: today(), note, exerciseName }),
   })
 }
 
