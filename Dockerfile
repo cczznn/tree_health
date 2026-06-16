@@ -11,6 +11,7 @@ COPY --from=builder /app/package.json /app/package-lock.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/src ./src
+COPY --from=builder /app/deepseek-key.txt ./deepseek-key.txt
 ENV PORT=3000
 EXPOSE 3000
 CMD ["npx", "tsx", "src/server.ts"]
