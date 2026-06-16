@@ -128,11 +128,12 @@ export async function generateDiet(input: AiPlanInput, activityLevel?: string): 
   }
 }
 
-必须遵守：
+必须遵守（非常重要）：
 - 每个 items 中的食物对象必须包含 protein、fat、carbs、grams、calories、name 六个字段，缺一不可
+- **先设计所有餐食的 items，加总所有 items 的 calories 得到总和 C**
+- **dailyCalories 必须等于 C（所有餐食热量的实际总和），不是公式算出的理论值**
 - macros 对象必须包含 protein、fat、carbs 且数值 = 所有餐食中同名营养素相加的总和
-- 食物尽量用中国常见食物
-- 三餐总热量接近 dailyCalories`,
+- 食物尽量用中国常见食物`,
     userProfile(input),
   )
 }
